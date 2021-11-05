@@ -81,9 +81,9 @@ class PoseControllerNode:
         self.trans_listener = tf.TransformListener()
 
         ########## Code starts here ##########
-        # TODO: Create a subscriber to the '/cmd_pose' topic that receives
+        # DONE: Create a subscriber to the '/cmd_pose' topic that receives
         #       Pose2D messages and calls cmd_pose_callback.
-
+        rospy.Subscriber('/cmd_pose', Pose2D, self.cmd_pose_callback)
         ########## Code ends here ##########
 
     def gazebo_callback(self, msg):
@@ -104,8 +104,8 @@ class PoseControllerNode:
 
     def cmd_pose_callback(self, msg):
         ########## Code starts here ##########
-        # TODO: Update the goal pose in the pose controller.
-
+        # DONE: Update the goal pose in the pose controller.
+        self.controller.load_goal(msg.x, msg.y, msg.theta)
         ########## Code ends here ##########
 
         # Record time of pose update
@@ -143,9 +143,9 @@ class PoseControllerNode:
                 pass
 
         ######### YOUR CODE HERE ############
-        # TODO: Use your pose controller to compute controls (V, om) given the
+        # DONE: Use your pose controller to compute controls (V, om) given the
         #       robot's current state.
-
+        V, om = self.controller.compute_control(self.x, self.y, self.theta, rospy.get_rostime().to_sec())
         ######### END OF YOUR CODE ##########
 
         cmd = Twist()
