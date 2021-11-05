@@ -9,6 +9,7 @@ from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
 from std_msgs.msg import Float32MultiArray, String
 import tf
 
+
 class Mode(Enum):
     """State machine modes. Feel free to change."""
     IDLE = 1
@@ -51,7 +52,8 @@ class SupervisorParams:
             print("    rviz = {}".format(self.rviz))
             print("    mapping = {}".format(self.mapping))
             print("    pos_eps, theta_eps = {}, {}".format(self.pos_eps, self.theta_eps))
-            print("    stop_time, stop_min_dist, crossing_time = {}, {}, {}".format(self.stop_time, self.stop_min_dist, self.crossing_time))
+            print("    stop_time, stop_min_dist, crossing_time = {}, {}, {}".format(self.stop_time, self.stop_min_dist,
+                                                                                    self.crossing_time))
 
 
 class Supervisor:
@@ -102,7 +104,6 @@ class Supervisor:
         else:
             self.x_g, self.y_g, self.theta_g = 1.5, -4., 0.
             self.mode = Mode.NAV
-        
 
     ########## SUBSCRIBER CALLBACKS ##########
 
@@ -150,10 +151,9 @@ class Supervisor:
         # distance of the stop sign
         dist = msg.distance
 
-        # if close enough and in nav mode, stop
-        if dist > 0 and dist < self.params.stop_min_dist and self.mode == Mode.NAV:
+        # if close enough and in nav or pose mode, stop
+        if dist > 0 and dist < self.params.stop_min_dist and (self.mode == Mode.NAV or self.mode == Mode.POSE):
             self.init_stop_sign()
-
 
     ########## STATE MACHINE ACTIONS ##########
 
@@ -163,7 +163,7 @@ class Supervisor:
 
     def go_to_pose(self):
         """ sends the current desired pose to the pose controller """
-
+        # in POSE state
         pose_g_msg = Pose2D()
         pose_g_msg.x = self.x_g
         pose_g_msg.y = self.y_g
@@ -173,7 +173,8 @@ class Supervisor:
 
     def nav_to_pose(self):
         """ sends the current desired pose to the naviagtor """
-
+        # in NAV state
+        # has seen the stop sign, waiting to get close
         nav_g_msg = Pose2D()
         nav_g_msg.x = self.x_g
         nav_g_msg.y = self.y_g
@@ -196,7 +197,7 @@ class Supervisor:
 
     def init_stop_sign(self):
         """ initiates a stop sign maneuver """
-
+        # transition to STOP mode
         self.stop_sign_start = rospy.get_rostime()
         self.mode = Mode.STOP
 
@@ -220,7 +221,6 @@ class Supervisor:
 
     ########## Code ends here ##########
 
-
     ########## STATE MACHINE LOOP ##########
 
     def loop(self):
@@ -231,7 +231,8 @@ class Supervisor:
         if not self.params.use_gazebo:
             try:
                 origin_frame = "/map" if self.params.mapping else "/odom"
-                translation, rotation = self.trans_listener.lookupTransform(origin_frame, '/base_footprint', rospy.Time(0))
+                translation, rotation = self.trans_listener.lookupTransform(origin_frame, '/base_footprint',
+                                                                            rospy.Time(0))
                 self.x, self.y = translation[0], translation[1]
                 self.theta = tf.transformations.euler_from_quaternion(rotation)[2]
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
@@ -243,7 +244,7 @@ class Supervisor:
             self.prev_mode = self.mode
 
         ########## Code starts here ##########
-        # TODO: Currently the state machine will just go to the pose without stopping
+        # DONE: Currently the state machine will just go to the pose without stopping
         #       at the stop sign.
 
         if self.mode == Mode.IDLE:
@@ -259,10 +260,16 @@ class Supervisor:
 
         elif self.mode == Mode.STOP:
             # At a stop sign
-            self.nav_to_pose()
+            # check if we can proceed
+            if self.has_stopped():
+                self.mode = Mode.CROSS
+                self.init_crossing()
 
         elif self.mode == Mode.CROSS:
             # Crossing an intersection
+            # check if crossing time has expired
+            if self.has_crossed():
+                self.mode = Mode.NAV
             self.nav_to_pose()
 
         elif self.mode == Mode.NAV:
@@ -277,7 +284,7 @@ class Supervisor:
         ############ Code ends here ############
 
     def run(self):
-        rate = rospy.Rate(10) # 10 Hz
+        rate = rospy.Rate(10)  # 10 Hz
         while not rospy.is_shutdown():
             self.loop()
             rate.sleep()
