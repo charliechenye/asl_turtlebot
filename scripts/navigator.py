@@ -68,8 +68,8 @@ class Navigator:
         self.plan_start = [0.0, 0.0]
 
         # Robot limits
-        self.v_max = 0.2  # maximum velocity
-        self.om_max = 0.4  # maximum angular velocity
+        self.v_max = rospy.get_param("~v_max", 0.2)  # maximum velocity
+        self.om_max = rospy.get_param("~om_max", 0.4)  # maximum angular velocity
 
         self.v_des = 0.12  # desired cruising velocity
         self.theta_start_thresh = 0.05  # threshold in theta to start moving forward when path-following
@@ -131,6 +131,9 @@ class Navigator:
         self.pose_controller.k1 = config["k1"]
         self.pose_controller.k2 = config["k2"]
         self.pose_controller.k3 = config["k3"]
+        
+        self.v_max = config["v_max"]
+        self.om_max = config["om_max"]
         return config
 
     def cmd_nav_callback(self, data):
@@ -284,7 +287,9 @@ class Navigator:
         else:
             V = 0.0
             om = 0.0
-
+            
+        
+        # print("[navigator::publish_control] self.mode =", self.mode)
         cmd_vel = Twist()
         cmd_vel.linear.x = V
         cmd_vel.angular.z = om

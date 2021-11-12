@@ -1,6 +1,6 @@
 import rospy
 import numpy as np
-from utils import wrapToPi
+from utils.utils import wrapToPi
 from std_msgs.msg import Float64
 
 # command zero velocities once we are this close to the goal

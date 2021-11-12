@@ -1,0 +1,9 @@
+<launch>
+  <arg name="v_max" default="0.1"/>
+  <arg name="om_max" default="0.2"/>
+
+  <include file="$(find asl_turtlebot)/launch/project/project.launch">
+    <arg name="v_max" default="$(arg v_max)"/>
+    <arg name="om_max" default="$(arg om_max)"/>
+  </include>
+</launch>
