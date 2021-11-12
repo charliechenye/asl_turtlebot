@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from utils import plot_line_segments
+from .utils import plot_line_segments
 
 class AStar(object):
     """Represents a motion planning problem to be solved using A*"""
@@ -85,10 +85,10 @@ class AStar(object):
         HINTS: Use self.is_free to check whether a given state is indeed free.
                Use self.snap_to_grid (see above) to ensure that the neighbors
                you compute are actually on the discrete grid, i.e., if you were
-               to compute neighbors by adding/subtracting self.resolution from x, 
-               numerical errors could creep in over the course of many additions 
-               and cause grid point equality checks to fail. To remedy this, you 
-               should make sure that every neighbor is snapped to the grid as it 
+               to compute neighbors by adding/subtracting self.resolution from x,
+               numerical errors could creep in over the course of many additions
+               and cause grid point equality checks to fail. To remedy this, you
+               should make sure that every neighbor is snapped to the grid as it
                is computed.
         """
         neighbors = []
