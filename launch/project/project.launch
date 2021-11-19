@@ -2,6 +2,7 @@
   <arg name="sim" default="true"/>
   <arg name="v_max" default="0.2"/>
   <arg name="om_max" default="0.4"/>
+  <arg name="kbd_flg" default='false'/>
 
   <include file="$(find asl_turtlebot)/launch/root.launch">
     <arg name="world" value="project_city" />
@@ -17,4 +18,10 @@
     <param name="v_max" value="$(arg v_max)"/>
     <param name="om_max" value="$(arg om_max)"/>
   </node>
+
+  <node pkg="asl_turtlebot" type="switch.py" name="switch" output="screen">
+    <param name="kbd_flg" value="$(arg kbd_flg)"/>
+  </node>
+
+  <node pkg="asl_turtlebot" type="keyboard_teleop.py" name="teleop" output="screen"/>
 </launch>
