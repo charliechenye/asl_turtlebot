@@ -7,7 +7,7 @@ from std_msgs.msg import Bool
 class KeyBoardSwitch:
     def __init__(self):
         rospy.init_node('keyboard_switch_control')
-        self.tel_flg = rospy.get_param("/switch/kbd_flg", False)
+        self.tel_flg = rospy.get_param("~kbd_flg", False)
 
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.tel_sub = rospy.Subscriber('/cmd_vel_tel', Twist, self.tel_callback)
@@ -22,7 +22,7 @@ class KeyBoardSwitch:
         if not self.tel_flg:
             self.pub.publish(msg)
 
-    def switch_sub(self, msg):
+    def switch_callback(self, msg):
         self.tel_flg = msg.data
 
     def run(self):
