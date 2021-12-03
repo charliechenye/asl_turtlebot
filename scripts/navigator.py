@@ -349,6 +349,8 @@ class Navigator:
         if len(planned_path) < 4:
             rospy.loginfo("Path too short to track")
             self.switch_mode(Mode.PARK)
+            if self.mode == Mode.PARK:
+                self.next_way_point_pub.publish(Bool(True))
             return
 
         # Smooth and generate a trajectory
