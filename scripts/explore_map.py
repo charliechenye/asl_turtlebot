@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import rospy
-from geometry_msgs.msg import Pose2D, Rotation2d
+from geometry_msgs.msg import Pose2D
 from std_msgs.msg import Bool
 from visualization_msgs.msg import Marker
 from time import sleep
