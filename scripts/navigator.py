@@ -178,7 +178,7 @@ class Navigator:
                 self.map_height,
                 self.map_origin[0],
                 self.map_origin[1],
-                8,
+                6,
                 self.map_probs,
             )
             if self.x_g is not None:
