@@ -6,7 +6,8 @@ from .utils import plot_line_segments
 class AStar(object):
     """Represents a motion planning problem to be solved using A*"""
 
-    def __init__(self, statespace_lo, statespace_hi, x_init, x_goal, occupancy: 'DetOccupancyGrid2D', resolution=1):
+    def __init__(self, statespace_lo, statespace_hi, x_init, x_goal, occupancy: 'DetOccupancyGrid2D', resolution=1,
+                        time_out_steps = 100000):
         self.statespace_lo = statespace_lo         # state space lower bound (e.g., [-5, -5])
         self.statespace_hi = statespace_hi         # state space upper bound (e.g., [5, 5])
         self.occupancy = occupancy                 # occupancy grid (a DetOccupancyGrid2D object)
@@ -30,6 +31,7 @@ class AStar(object):
         self.est_cost_through[self.x_init] = self.distance(self.x_init,self.x_goal)
 
         self.path = None        # the final path as a list of states
+        self.time_out_steps = time_out_steps
 
     def is_free(self, x):
         """
@@ -164,7 +166,8 @@ class AStar(object):
         """
         ########## Code starts here ##########
         # Initialization completes in constructor
-        while self.open_set:
+        step_count = 0
+        while self.open_set and step_count < self.time_out_steps:
             x_current = self.find_best_est_cost_through()
             if x_current == self.x_goal:
                 self.path = self.reconstruct_path()
@@ -184,6 +187,7 @@ class AStar(object):
                 self.came_from[x_neighbor] = x_current
                 self.cost_to_arrive[x_neighbor] = c_neighbor
                 self.est_cost_through[x_neighbor] = c_neighbor + self.distance(x_neighbor, self.x_goal)
+            step_count += 1
         return False
         ########## Code ends here ##########
 
