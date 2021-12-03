@@ -148,6 +148,8 @@ class Navigator:
             self.x_g = data.x
             self.y_g = data.y
             self.theta_g = data.theta
+            rospy.loginfo("replanning with new goal")
+            print(self.x_g, self.y_g, self.theta_g)
             self.replan()
 
     def map_md_callback(self, msg):
