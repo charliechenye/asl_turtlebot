@@ -17,9 +17,14 @@ class PublishWayPoint:
 
         self.delayed_publish = rospy.get_param("~delay_publish", 3)
         self.marker_size = rospy.get_param("~marker_size", 0.1)
+
+        self.explore_phase = True
+
         self.published_i = 0
         self.way_point_list = []
         self.way_point_viz = []
+        self.location_point_list = []
+        self.location_point_vis = []
         # Preset Way Points
         s = """
         x: 3.336607942302636
@@ -102,22 +107,26 @@ class PublishWayPoint:
 
             counter = (counter + 1) % 4
         self.total_waypoints = len(self.way_point_list)
+        self.total_locations = 0
 
         self.retrieve_next_way_point(Bool(True))
 
     def retrieve_next_way_point(self, msg):
-        if msg.data and self.published_i < self.total_waypoints:
-            rospy.loginfo("Received Instruction to publish waypoint %d" % self.published_i)
-            sleep(self.delayed_publish)
-            rospy.loginfo("Publishing waypoint %d" % self.published_i)
-            self.way_point_viz[self.published_i].header.stamp = rospy.Time()
-            self.way_point_viz_pub.publish(self.way_point_viz[self.published_i])
-            self.way_point_lst_pub.publish(self.way_point_list[self.published_i])
-            self.published_i += 1
-        elif self.published_i == self.total_waypoints:
-            rospy.loginfo("No more way points to explore. Ready to switch to rescue mode")
-        else:
+        if not msg.data:
             rospy.loginfo("ERROR!!!!")
+            return
+        if self.explore_phase:
+            if self.published_i < self.total_waypoints:
+                rospy.loginfo("Received Instruction to publish waypoint %d" % self.published_i)
+                sleep(self.delayed_publish)
+                rospy.loginfo("Publishing waypoint %d" % self.published_i)
+                self.way_point_viz[self.published_i].header.stamp = rospy.Time()
+                self.way_point_viz_pub.publish(self.way_point_viz[self.published_i])
+                self.way_point_lst_pub.publish(self.way_point_list[self.published_i])
+                self.published_i += 1
+            else:
+                rospy.loginfo("No more way points to explore. Ready to switch to rescue mode")
+
 
     def run(self):
         rospy.spin()

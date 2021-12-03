@@ -34,7 +34,7 @@ class Navigator:
     """
 
     def __init__(self):
-        rospy.init_node("turtlebot_navigator", anonymous=True)
+        rospy.init_node("turtlebot_navigator", anonymous=False)
         self.mode = Mode.IDLE
 
         # current state
@@ -70,6 +70,7 @@ class Navigator:
         # Robot limits
         self.v_max = rospy.get_param("~v_max", 0.2)  # maximum velocity
         self.om_max = rospy.get_param("~om_max", 0.4)  # maximum angular velocity
+        self.robot_size = rospy.get_param("~robot_size", 6)
 
         self.v_des = 0.12  # desired cruising velocity
         self.theta_start_thresh = 0.05  # threshold in theta to start moving forward when path-following
@@ -179,7 +180,7 @@ class Navigator:
                 self.map_height,
                 self.map_origin[0],
                 self.map_origin[1],
-                6,
+                self.robot_size,
                 self.map_probs,
             )
             if self.x_g is not None:
@@ -212,8 +213,7 @@ class Navigator:
         accuracy to return to idle state
         """
         return (
-            linalg.norm(np.array([self.x - self.x_g, self.y - self.y_g]))
-            < self.at_thresh
+            linalg.norm(np.array([self.x - self.x_g, self.y - self.y_g])) < self.at_thresh
             and abs(wrapToPi(self.theta - self.theta_g)) < self.at_thresh_theta
         )
 

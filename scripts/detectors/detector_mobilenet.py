@@ -52,7 +52,7 @@ def load_object_labels(filename):
 
 class Detector:
     def __init__(self):
-        rospy.init_node("turtlebot_detector", anonymous=True)
+        rospy.init_node("turtlebot_detector", anonymous=False)
         self.bridge = CvBridge()
 
         self.detected_objects_pub = rospy.Publisher(
