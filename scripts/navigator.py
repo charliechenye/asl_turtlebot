@@ -179,7 +179,7 @@ class Navigator:
                 self.map_height,
                 self.map_origin[0],
                 self.map_origin[1],
-                6,
+                8,
                 self.map_probs,
             )
             if self.x_g is not None:
@@ -349,6 +349,8 @@ class Navigator:
         if len(planned_path) < 4:
             rospy.loginfo("Path too short to track")
             self.switch_mode(Mode.PARK)
+            # if self.mode == Mode.PARK:
+            #    self.next_way_point_pub.publish(Bool(True))
             return
 
         # Smooth and generate a trajectory
