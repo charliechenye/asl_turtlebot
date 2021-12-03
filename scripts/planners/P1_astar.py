@@ -18,16 +18,6 @@ class AStar(object):
         self.directions = [(-1, -1), (-1, 0), (-1, 1),
                            (0, -1), (0, 1),
                            (1, -1), (1, 0), (1, 1)]
-        self.closed_set = set()    # the set containing the states that have been visited
-        self.open_set = set()      # the set containing the states that are candidate for future expansion
-
-        self.est_cost_through = {}  # dictionary of the estimated cost from start to goal passing through state (often called f score)
-        self.cost_to_arrive = {}    # dictionary of the cost-to-arrive at state from start (often called g score)
-        self.came_from = {}         # dictionary keeping track of each state's parent to reconstruct the path
-
-        self.open_set.add(self.x_init)
-        self.cost_to_arrive[self.x_init] = 0
-        self.est_cost_through[self.x_init] = self.distance(self.x_init,self.x_goal)
 
         self.path = None        # the final path as a list of states
         self.time_out_steps = time_out_steps
@@ -103,14 +93,7 @@ class AStar(object):
         ########## Code ends here ##########
         return neighbors
 
-    def find_best_est_cost_through(self):
-        """
-        Gets the state in open_set that has the lowest est_cost_through
-        Output: A tuple, the state found in open_set that has the lowest est_cost_through
-        """
-        return min(self.open_set, key=lambda x: self.est_cost_through[x])
-
-    def reconstruct_path(self):
+    def reconstruct_path(self, came_from):
         """
         Use the came_from map to reconstruct a path from the initial location to
         the goal location
@@ -120,7 +103,7 @@ class AStar(object):
         path = [self.x_goal]
         current = path[-1]
         while current != self.x_init:
-            path.append(self.came_from[current])
+            path.append(came_from[current])
             current = path[-1]
         return list(reversed(path))
 
@@ -167,30 +150,42 @@ class AStar(object):
         # Initialization completes in constructor
         if not self.is_free(self.x_goal):
             return False, "AStar: goal state is occupied"
+
+        # Initialization
+        print("ASTar: Started")
         step_count = 0
-        print("\n\n\n\nASTar: Hello World!\n\n\n\n")
-        while self.open_set and step_count < self.time_out_steps:
+        closed_set = {self.x_init}    # the set containing the states that have been visited
+        open_set = set()      # the set containing the states that are candidate for future expansion
+
+        # dictionary of the estimated cost from start to goal passing through state (often called f score)
+        est_cost_through = {self.x_init: self.distance(self.x_init,self.x_goal)}
+        # dictionary of the cost-to-arrive at state from start (often called g score)
+        cost_to_arrive = {self.x_init: 0}
+        # dictionary keeping track of each state's parent to reconstruct the path
+        came_from = {}
+
+        while open_set and step_count < self.time_out_steps:
             if step_count % 100 == 0:
                 print("AStar: Step Count %d" % step_count)
-            x_current = self.find_best_est_cost_through()
+            x_current = min(open_set, key=lambda x: est_cost_through[x])
             if x_current == self.x_goal:
-                self.path = self.reconstruct_path()
+                self.path = self.reconstruct_path(came_from)
                 return_msg = "AStar: Solved after %d steps" % step_count
                 return True, return_msg
-            self.open_set.remove(x_current)
-            self.closed_set.add(x_current)
-            cost_to_arrive_x_current = self.cost_to_arrive[x_current]
+            open_set.remove(x_current)
+            closed_set.add(x_current)
+            cost_to_arrive_x_current = cost_to_arrive[x_current]
             for x_neighbor in self.get_neighbors(x_current):
-                if x_neighbor in self.closed_set:
+                if x_neighbor in closed_set:
                     continue
                 c_neighbor = cost_to_arrive_x_current + self.distance(x_current, x_neighbor)
-                if x_neighbor not in self.open_set:
-                    self.open_set.add(x_neighbor)
-                elif c_neighbor >= self.cost_to_arrive[x_neighbor]:
+                if x_neighbor not in open_set:
+                    open_set.add(x_neighbor)
+                elif c_neighbor >= cost_to_arrive[x_neighbor]:
                     continue
-                self.came_from[x_neighbor] = x_current
-                self.cost_to_arrive[x_neighbor] = c_neighbor
-                self.est_cost_through[x_neighbor] = c_neighbor + self.distance(x_neighbor, self.x_goal)
+                came_from[x_neighbor] = x_current
+                cost_to_arrive[x_neighbor] = c_neighbor
+                est_cost_through[x_neighbor] = c_neighbor + self.distance(x_neighbor, self.x_goal)
             step_count += 1
         return_msg = "AStar: Timeout after %d steps" % step_count
         return False, return_msg
