@@ -165,6 +165,8 @@ class AStar(object):
         """
         ########## Code starts here ##########
         # Initialization completes in constructor
+        if not self.is_free(self.x_goal):
+            return False, "AStar: goal state is occupied"
         step_count = 0
         print("\n\n\n\nASTar: Hello World!\n\n\n\n")
         while self.open_set and step_count < self.time_out_steps:
