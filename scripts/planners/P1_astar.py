@@ -147,10 +147,6 @@ class AStar(object):
                 set membership efficiently using the syntax "if item in set".
         """
         ########## Code starts here ##########
-        # Initialization completes in constructor
-        if not self.is_free(self.x_goal):
-            return False, "AStar: goal state is occupied"
-
         # Initialization
         print("ASTar: Started")
         step_count = 0
@@ -190,8 +186,12 @@ class AStar(object):
                 cost_to_arrive[x_neighbor] = c_neighbor
                 est_cost_through[x_neighbor] = c_neighbor + self.distance(x_neighbor, self.x_goal)
             step_count += 1
-        return_msg = "AStar: Timeout after %d steps" % step_count
-        return False, return_msg
+        if not self.is_free(self.x_goal):
+            return False, "AStar: Goal state is occupied"
+        elif step_count == self.time_out_steps
+            return False, "AStar: Timeout after %d steps" % self.time_out_steps
+        else:
+            return False, "Astar: Stopped after exploring %d nodes" % step_count
         ########## Code ends here ##########
 
 class DetOccupancyGrid2D(object):
