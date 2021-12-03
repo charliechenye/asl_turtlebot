@@ -7,7 +7,7 @@ class AStar(object):
     """Represents a motion planning problem to be solved using A*"""
 
     def __init__(self, statespace_lo, statespace_hi, x_init, x_goal, occupancy: 'DetOccupancyGrid2D', resolution=1,
-                        time_out_steps = 100000):
+                        time_out_steps = 5000):
         self.statespace_lo = statespace_lo         # state space lower bound (e.g., [-5, -5])
         self.statespace_hi = statespace_hi         # state space upper bound (e.g., [5, 5])
         self.occupancy = occupancy                 # occupancy grid (a DetOccupancyGrid2D object)
@@ -15,7 +15,6 @@ class AStar(object):
         self.x_init = self.snap_to_grid(x_init)    # initial state
         self.x_goal = self.snap_to_grid(x_goal)    # goal state
 
-        self.max_distance = 2 * self.distance(self.statespace_lo, self.statespace_hi)
         self.directions = [(-1, -1), (-1, 0), (-1, 1),
                            (0, -1), (0, 1),
                            (1, -1), (1, 0), (1, 1)]
@@ -167,7 +166,7 @@ class AStar(object):
         ########## Code starts here ##########
         # Initialization completes in constructor
         step_count = 0
-        print("\n\n\n\n\n\n\nASTar: Hello World!\n\n\n\n\n\n\n\n\n\n")
+        print("\n\n\n\nASTar: Hello World!\n\n\n\n")
         while self.open_set and step_count < self.time_out_steps:
             x_current = self.find_best_est_cost_through()
             if x_current == self.x_goal:
@@ -183,8 +182,7 @@ class AStar(object):
                 c_neighbor = cost_to_arrive_x_current + self.distance(x_current, x_neighbor)
                 if x_neighbor not in self.open_set:
                     self.open_set.add(x_neighbor)
-                elif c_neighbor >= min(self.cost_to_arrive[x_neighbor],
-                                       self.cost_to_arrive.get(self.x_goal, self.max_distance)):
+                elif c_neighbor >= self.cost_to_arrive[x_neighbor]:
                     continue
                 self.came_from[x_neighbor] = x_current
                 self.cost_to_arrive[x_neighbor] = c_neighbor
