@@ -74,7 +74,7 @@ class PublishWayPoint:
             elif counter == 2:
                 th = float(line.split(':')[1].strip())
             else:
-                self.way_point_list.append(Pose2D(x, y, Rotation2d(th)))
+                self.way_point_list.append(Pose2D(x, y, th))
                 marker = Marker()
                 marker.header.frame_id = "map"
                 marker.id = 0
