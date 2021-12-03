@@ -3,7 +3,7 @@
 import rospy
 from nav_msgs.msg import OccupancyGrid, MapMetaData, Path
 from geometry_msgs.msg import Twist, Pose2D, PoseStamped
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 import tf
 import numpy as np
 from numpy import linalg
@@ -122,6 +122,7 @@ class Navigator:
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)
         rospy.Subscriber("/cmd_nav", Pose2D, self.cmd_nav_callback)
 
+        self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
         print("finished init")
 
     def dyn_cfg_callback(self, config, level):
@@ -446,6 +447,7 @@ class Navigator:
                     self.y_g = None
                     self.theta_g = None
                     self.switch_mode(Mode.IDLE)
+                    self.next_way_point_pub.publish(Bool(True))
 
             self.publish_control()
             rate.sleep()
