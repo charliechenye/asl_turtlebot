@@ -128,6 +128,7 @@ Visualization Manager:
         Grid: true
         LaserScan: true
         Map: true
+        Marker: true
         Path: true
         Pose: true
         TF: true
@@ -225,6 +226,14 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /marker_way_point
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -285,5 +294,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1240
-  X: -1
-  Y: -16
+  X: -2
+  Y: -32
