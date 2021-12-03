@@ -189,6 +189,7 @@ class AStar(object):
                 self.est_cost_through[x_neighbor] = c_neighbor + self.distance(x_neighbor, self.x_goal)
             step_count += 1
         if not self.is_free(self.x_goal):
+            print(self.x_goal, self.statespace_lo, self.statespace_hi, self.occupancy.is_free(self.x_goal))
             return False, "AStar: Goal state is occupied"
         elif step_count == self.time_out_steps:
             return False, "AStar: Timeout after %d steps" % self.time_out_steps
