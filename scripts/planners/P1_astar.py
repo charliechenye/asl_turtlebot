@@ -167,6 +167,7 @@ class AStar(object):
         ########## Code starts here ##########
         # Initialization completes in constructor
         step_count = 0
+        print("\n\n\n\n\n\n\nASTar: Hello World!\n\n\n\n\n\n\n\n\n\n")
         while self.open_set and step_count < self.time_out_steps:
             x_current = self.find_best_est_cost_through()
             if x_current == self.x_goal:
