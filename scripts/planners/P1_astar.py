@@ -163,6 +163,10 @@ class AStar(object):
         ########## Code starts here ##########
         # Initialization
         print("ASTar: Started")
+        if not self.is_free(self.x_goal):
+            print(self.x_goal, self.statespace_lo, self.statespace_hi, self.occupancy.is_free(self.x_goal))
+            return False, "AStar: Goal state is occupied"
+
         step_count = 0
 
         while self.open_set and step_count < self.time_out_steps:
@@ -188,10 +192,8 @@ class AStar(object):
                 self.cost_to_arrive[x_neighbor] = c_neighbor
                 self.est_cost_through[x_neighbor] = c_neighbor + self.distance(x_neighbor, self.x_goal)
             step_count += 1
-        if not self.is_free(self.x_goal):
-            print(self.x_goal, self.statespace_lo, self.statespace_hi, self.occupancy.is_free(self.x_goal))
-            return False, "AStar: Goal state is occupied"
-        elif step_count == self.time_out_steps:
+            
+        if step_count == self.time_out_steps:
             return False, "AStar: Timeout after %d steps" % self.time_out_steps
         else:
             return False, "Astar: Stopped after exploring %d nodes" % step_count
