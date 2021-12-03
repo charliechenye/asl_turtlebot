@@ -154,8 +154,11 @@ class AStar(object):
         # Initialization
         print("ASTar: Started")
         step_count = 0
-        closed_set = {self.x_init}    # the set containing the states that have been visited
-        open_set = set()      # the set containing the states that are candidate for future expansion
+        # the set containing the states that have been visited
+        closed_set = set()
+        # the set containing the states that are candidate for future expansion
+        open_set = {self.x_init}
+
 
         # dictionary of the estimated cost from start to goal passing through state (often called f score)
         est_cost_through = {self.x_init: self.distance(self.x_init,self.x_goal)}
