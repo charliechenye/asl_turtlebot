@@ -171,7 +171,8 @@ class AStar(object):
             x_current = self.find_best_est_cost_through()
             if x_current == self.x_goal:
                 self.path = self.reconstruct_path()
-                return True
+                return_msg = "AStar: Solved after %d steps" % step_count
+                return True, return_msg
             self.open_set.remove(x_current)
             self.closed_set.add(x_current)
             cost_to_arrive_x_current = self.cost_to_arrive[x_current]
@@ -188,7 +189,8 @@ class AStar(object):
                 self.cost_to_arrive[x_neighbor] = c_neighbor
                 self.est_cost_through[x_neighbor] = c_neighbor + self.distance(x_neighbor, self.x_goal)
             step_count += 1
-        return False
+        return_msg = "AStar: Timeout after %d steps" % step_count
+        return False, return_msg
         ########## Code ends here ##########
 
 class DetOccupancyGrid2D(object):

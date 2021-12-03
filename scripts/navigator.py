@@ -334,11 +334,11 @@ class Navigator:
         )
 
         rospy.loginfo("Navigator: computing navigation plan")
-        success = problem.solve()
-        if not success:
-            rospy.loginfo("Planning failed")
+        is_success, return_msg = problem.solve()
+        if not is_success:
+            rospy.loginfo("Planning failed: " + return_msg)
             return
-        rospy.loginfo("Planning Succeeded")
+        rospy.loginfo("Planning Succeeded: " + return_msg)
 
         planned_path = problem.path
 
