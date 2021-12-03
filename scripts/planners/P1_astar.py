@@ -22,6 +22,20 @@ class AStar(object):
         self.path = None        # the final path as a list of states
         self.time_out_steps = time_out_steps
 
+        # Initialization
+        # the set containing the states that have been visited
+        self.closed_set = set()
+        # the set containing the states that are candidate for future expansion
+        self.open_set = {self.x_init}
+
+
+        # dictionary of the estimated cost from start to goal passing through state (often called f score)
+        self.est_cost_through = {self.x_init: self.distance(self.x_init,self.x_goal)}
+        # dictionary of the cost-to-arrive at state from start (often called g score)
+        self.cost_to_arrive = {self.x_init: 0}
+        # dictionary keeping track of each state's parent to reconstruct the path
+        self.come_from = {}
+
     def is_free(self, x):
         """
         Checks if a give state x is free, meaning it is inside the bounds of the map and
@@ -93,9 +107,9 @@ class AStar(object):
         ########## Code ends here ##########
         return neighbors
 
-    def reconstruct_path(self, came_from):
+    def reconstruct_path(self, come_from):
         """
-        Use the came_from map to reconstruct a path from the initial location to
+        Use the self.come_from map to reconstruct a path from the initial location to
         the goal location
         Output:
             A list of tuples, which is a list of the states that go from start to goal
@@ -103,7 +117,7 @@ class AStar(object):
         path = [self.x_goal]
         current = path[-1]
         while current != self.x_init:
-            path.append(came_from[current])
+            path.append(self.come_from[current])
             current = path[-1]
         return list(reversed(path))
 
@@ -125,10 +139,10 @@ class AStar(object):
         plt.axis([0, self.occupancy.width, 0, self.occupancy.height])
 
     def plot_tree(self, point_size=15):
-        plot_line_segments([(x, self.came_from[x]) for x in self.open_set if x != self.x_init], linewidth=1, color="blue", alpha=0.2)
-        plot_line_segments([(x, self.came_from[x]) for x in self.closed_set if x != self.x_init], linewidth=1, color="blue", alpha=0.2)
-        px = [x[0] for x in self.open_set | self.closed_set if x != self.x_init and x != self.x_goal]
-        py = [x[1] for x in self.open_set | self.closed_set if x != self.x_init and x != self.x_goal]
+        plot_line_segments([(x, self.self.come_from[x]) for x in self.self.open_set if x != self.x_init], linewidth=1, color="blue", alpha=0.2)
+        plot_line_segments([(x, self.self.come_from[x]) for x in self.self.closed_set if x != self.x_init], linewidth=1, color="blue", alpha=0.2)
+        px = [x[0] for x in self.self.open_set | self.self.closed_set if x != self.x_init and x != self.x_goal]
+        py = [x[1] for x in self.self.open_set | self.self.closed_set if x != self.x_init and x != self.x_goal]
         plt.scatter(px, py, color="blue", s=point_size, zorder=10, alpha=0.2)
 
     def solve(self):
@@ -150,45 +164,33 @@ class AStar(object):
         # Initialization
         print("ASTar: Started")
         step_count = 0
-        # the set containing the states that have been visited
-        closed_set = set()
-        # the set containing the states that are candidate for future expansion
-        open_set = {self.x_init}
 
-
-        # dictionary of the estimated cost from start to goal passing through state (often called f score)
-        est_cost_through = {self.x_init: self.distance(self.x_init,self.x_goal)}
-        # dictionary of the cost-to-arrive at state from start (often called g score)
-        cost_to_arrive = {self.x_init: 0}
-        # dictionary keeping track of each state's parent to reconstruct the path
-        came_from = {}
-
-        while open_set and step_count < self.time_out_steps:
+        while self.open_set and step_count < self.time_out_steps:
             if step_count % 100 == 0:
                 print("AStar: Step Count %d" % step_count)
-            x_current = min(open_set, key=lambda x: est_cost_through[x])
+            x_current = min(self.open_set, key=lambda x: self.est_cost_through[x])
             if x_current == self.x_goal:
-                self.path = self.reconstruct_path(came_from)
+                self.path = self.reconstruct_path(self.come_from)
                 return_msg = "AStar: Solved after %d steps" % step_count
                 return True, return_msg
-            open_set.remove(x_current)
-            closed_set.add(x_current)
-            cost_to_arrive_x_current = cost_to_arrive[x_current]
+            self.open_set.remove(x_current)
+            self.closed_set.add(x_current)
+            cost_to_arrive_x_current = self.cost_to_arrive[x_current]
             for x_neighbor in self.get_neighbors(x_current):
-                if x_neighbor in closed_set:
+                if x_neighbor in self.closed_set:
                     continue
                 c_neighbor = cost_to_arrive_x_current + self.distance(x_current, x_neighbor)
-                if x_neighbor not in open_set:
-                    open_set.add(x_neighbor)
-                elif c_neighbor >= cost_to_arrive[x_neighbor]:
+                if x_neighbor not in self.open_set:
+                    self.open_set.add(x_neighbor)
+                elif c_neighbor >= self.cost_to_arrive[x_neighbor]:
                     continue
-                came_from[x_neighbor] = x_current
-                cost_to_arrive[x_neighbor] = c_neighbor
-                est_cost_through[x_neighbor] = c_neighbor + self.distance(x_neighbor, self.x_goal)
+                self.come_from[x_neighbor] = x_current
+                self.cost_to_arrive[x_neighbor] = c_neighbor
+                self.est_cost_through[x_neighbor] = c_neighbor + self.distance(x_neighbor, self.x_goal)
             step_count += 1
         if not self.is_free(self.x_goal):
             return False, "AStar: Goal state is occupied"
-        elif step_count == self.time_out_steps
+        elif step_count == self.time_out_steps:
             return False, "AStar: Timeout after %d steps" % self.time_out_steps
         else:
             return False, "Astar: Stopped after exploring %d nodes" % step_count
