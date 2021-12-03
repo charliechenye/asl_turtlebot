@@ -16,6 +16,7 @@ class PublishWayPoint:
         self.way_point_viz_pub = rospy.Publisher('/marker_way_point', Marker, queue_size=10)
 
         self.delayed_publish = rospy.get_param("~delay_publish", 3)
+        self.marker_size = rospy.get_param("~marker_size", 0.1)
         self.published_i = 0
         self.way_point_list = []
         self.way_point_viz = []
@@ -89,11 +90,11 @@ class PublishWayPoint:
                 marker.pose.orientation.z = 0.0
                 marker.pose.orientation.w = 1.0
 
-                marker.scale.x = 0.5
-                marker.scale.y = 0.5
-                marker.scale.z = 0.5
+                marker.scale.x = self.marker_size
+                marker.scale.y = self.marker_size
+                marker.scale.z = self.marker_size
 
-                marker.color.a = 1.0  # Don't forget to set the alpha!
+                marker.color.a = 0.5  # Don't forget to set the alpha!
                 marker.color.r = 0.0
                 marker.color.g = 1.0
                 marker.color.b = 0.0
@@ -106,6 +107,7 @@ class PublishWayPoint:
 
     def retrieve_next_way_point(self, msg):
         if msg.data and self.published_i < self.total_waypoints:
+            rospy.loginfo("Received Instruction to publish waypoint %d" % self.published_i)
             sleep(self.delayed_publish)
             rospy.loginfo("Publishing waypoint %d" % self.published_i)
             self.way_point_viz[self.published_i].header.stamp = rospy.Time()
