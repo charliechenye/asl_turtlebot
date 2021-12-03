@@ -15,10 +15,12 @@ class PublishWayPoint:
         self.way_point_lst_pub = rospy.Publisher("/cmd_nav", Pose2D, queue_size=10)
         self.way_point_viz_pub = rospy.Publisher('/marker_way_point', Marker, queue_size=10)
 
-        self.delayed_publish = rospy.get_param("~delay_publish", 3)
+        self.delayed_publish_exp = rospy.get_param("~delay_publish_explore", 1)
+        self.delayed_publish_res = rospy.get_param("~delay_publish_rescue", 3)
         self.marker_size = rospy.get_param("~marker_size", 0.1)
 
         self.explore_phase = True
+        self.delayed_publish = self.delayed_publish_exp
 
         self.published_i = 0
         self.way_point_list = []

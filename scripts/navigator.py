@@ -203,8 +203,7 @@ class Navigator:
         start using the pose controller
         """
         return (
-            linalg.norm(np.array([self.x - self.x_g, self.y - self.y_g]))
-            < self.near_thresh
+            linalg.norm(np.array([self.x - self.x_g, self.y - self.y_g])) < self.near_thresh
         )
 
     def at_goal(self):
