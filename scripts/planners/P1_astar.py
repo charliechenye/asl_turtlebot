@@ -168,6 +168,8 @@ class AStar(object):
         step_count = 0
         print("\n\n\n\nASTar: Hello World!\n\n\n\n")
         while self.open_set and step_count < self.time_out_steps:
+            if step_count % 100 == 0:
+                print("AStar: Step Count %d" % step_count)
             x_current = self.find_best_est_cost_through()
             if x_current == self.x_goal:
                 self.path = self.reconstruct_path()
