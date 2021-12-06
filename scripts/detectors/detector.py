@@ -1,4 +1,18 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Dec  6 09:26:54 2021
+
+@author: Eleni Spirakis
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Dec  6 09:09:05 2021
+
+@author: Eleni Spirakis
+"""
+
+# !/usr/bin/env python3
 
 import rospy
 import os
@@ -57,6 +71,7 @@ class DetectorParams:
             print("    label_path = {}".format(label_path))
             print("    min_score = {}".format(self.min_score))
 
+
 class Detector:
 
     def __init__(self):
@@ -88,13 +103,13 @@ class Detector:
         self.laser_angle_increment = 0.01  # this gets updated
 
         self.object_publishers = {}
+        self.published_objects = []
         self.object_labels = load_object_labels(self.params.label_path)
 
         self.tf_listener = TransformListener()
         rospy.Subscriber('/camera/image_raw', Image, self.camera_callback, queue_size=1)
         rospy.Subscriber('/camera/camera_info', CameraInfo, self.camera_info_callback)
         rospy.Subscriber('/scan', LaserScan, self.laser_callback)
-        rospy.Subscriber('/odom', Odometry, self.location_callback)
 
     def run_detection(self, img):
         """ runs a detection method in a given image """
@@ -213,6 +228,10 @@ class Detector:
 
         # runs object detection in the image
         (boxes, scores, classes, num) = self.run_detection(img)
+        self.object_publishers[0] = rospy.Publisher('/detector/stop_sign',
+                                                    DetectedObject, queue_size=10)
+        self.object_publishers[1] = rospy.Publisher('/detector/objects',
+                                                    DetectedObject, queue_size=10)
 
         if num > 0:
             # some objects were detected
@@ -244,9 +263,13 @@ class Detector:
                 # individaul channel of each object
                 # /detector DectedObject.objid
 
-                if cl not in self.object_publishers:
-                    self.object_publishers[cl] = rospy.Publisher('/detector/' + self.object_labels[cl],
-                                                                 DetectedObject, queue_size=10)
+                # if cl not in self.object_publishers:
+                # if self.object_labels[cl] == "stop_sign":
+                # self.object_publishers[cl] = rospy.Publisher('/detector/stop_sign',
+                # DetectedObject, queue_size=10)
+                # else:
+                # self.object_publishers[cl] = rospy.Publisher('/detector/'+self.object_labels[cl],
+                # DetectedObject, queue_size=10)
 
                 # publishes the detected object and its location
                 object_msg = DetectedObject()
@@ -257,13 +280,15 @@ class Detector:
                 object_msg.thetaleft = thetaleft
                 object_msg.thetaright = thetaright
                 object_msg.corners = [ymin, xmin, ymax, xmax]
-                self.object_publishers[cl].publish(object_msg)
 
-                rospy.init_node('marker_node', anonymous=True)
-                self.obj_pub = rospy.Publisher('marker_topic', Marker, queue_size=10)
-                # location for the object (x, y) Navigators within radius r
-                self.marker_sub = rospy.Subscriber('/detector/' + self.object_labels[cl], DetectedObject,
-                                                   self.object_callback)
+                if self.object_labels[cl] == 'stop_sign':
+                    self.object_publishers[0].publish(object_msg)
+                else:
+                    if self.object_labels[cl] not in self.published_objects:
+                        self.object_publishers[1].publish(object_msg)
+                        self.published_objects.append(self.object_labels[cl])
+
+                # self.object_publishers[cl].publish(object_msg)
 
         # displays the camera image
         cv2.imshow("Camera", img_bgr8)
@@ -288,62 +313,6 @@ class Detector:
 
         self.laser_ranges = msg.ranges
         self.laser_angle_increment = msg.angle_increment
-
-    def location_callback(self, msg):
-        # we need to figure out how to correctly pull the x,y,theta
-        self.poseX = msg.pose.pose.position.x
-        self.poseY = msg.pose.pose.position.y
-        quaternion = (msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z,
-                      msg.pose.pose.orientation.w)
-        euler = tf.transformations.euler_from_quaternion(quaternion)
-        self.poseTheta = euler[2]
-
-    def object_callback(self, msg):
-        marker = Marker()
-
-        marker.header.frame_id = "odom"
-        marker.header.stamp = rospy.Time()
-
-        # IMPORTANT: If you're creating multiple markers, # each need to have a separate marker ID.
-        marker.id = msg.id
-        marker.type = 2  # sphere
-
-        thetaleft = msg.thetaleft
-        thetaright = msg.thetaright
-        dist = msg.dist
-
-        if thetaleft > thetaright:
-            thetaleft = thetaleft - 2 * math.pi
-        thetaave = (thetaright - thetaleft) / 2
-
-        if thetaave < 0:
-            thetaave = thetaave + 2 * math.pi
-        thetam = self.poseTheta - thetaave
-
-        if thetam < 0:
-            thetam = thetam + 2 * math.pi
-        xm = self.poseX + dist * np.cos(thetam)
-        ym = self.poseY + dist * np.sin(thetam)
-
-        marker.pose.position.x = msg.xm
-        marker.pose.position.y = msg.ym
-        marker.pose.position.z = 0
-
-        marker.pose.orientation.x = 0.0
-        marker.pose.orientation.y = 0.0
-        marker.pose.orientation.z = 0.0
-        marker.pose.orientation.w = 1.0
-
-        marker.scale.x = 0.5
-        marker.scale.y = 0.5
-        marker.scale.z = 0.5
-
-        marker.color.a = 1.0  # Don't forget to set the alpha!
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
-        self.obj_pub.publish(marker)
-        print("Marker Published")
 
     def run(self):
         rospy.spin()

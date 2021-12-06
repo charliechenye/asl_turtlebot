@@ -19,6 +19,10 @@ from asl_turtlebot.msg import DetectedObject
 from dynamic_reconfigure.server import Server
 from asl_turtlebot.cfg import NavigatorConfig
 
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Pose2D
+from nav_msgs.msg import Odometry
+
 
 # state machine modes, not all implemented
 class Mode(Enum):
@@ -128,6 +132,8 @@ class Navigator:
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)
         rospy.Subscriber("/cmd_nav", Pose2D, self.cmd_nav_callback)
         rospy.Subscriber('/cmd_switch_rescue', Bool, self.switch_to_rescue_callback)
+        rospy.Subscriber('/odom', Odometry, self.location_callback)
+        rospy.Subscriber('/detector/objects', DetectedObject, self.detected_object_callback)
         ###
         # try:
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
@@ -149,10 +155,8 @@ class Navigator:
     def switch_to_rescue_callback(self, msg):
         if msg.data:
             self.traj_dt = 0.5
-            self.spline_alpha = 0.05
         else:
             self.traj_dt = 0.1
-            self.spline_alpha = 0.15
 
     ###
     def stop_sign_detected_callback(self, msg):
@@ -168,6 +172,61 @@ class Navigator:
             self.init_stop_sign()
 
     ###
+    def location_callback(self, msg):
+        # we need to figure out how to correctly pull the x,y,theta
+        self.poseX = msg.pose.pose.position.x
+        self.poseY = msg.pose.pose.position.y
+        quaternion = (msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z,
+                      msg.pose.pose.orientation.w)
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        self.poseTheta = euler[2]
+
+    def detected_object_callback(self, msg):
+        marker = Marker()
+
+        marker.header.frame_id = "odom"
+        marker.header.stamp = rospy.Time()
+
+        # IMPORTANT: If you're creating multiple markers, # each need to have a separate marker ID.
+        marker.id = msg.id
+        marker.type = 2  # sphere
+
+        thetaleft = msg.thetaleft
+        thetaright = msg.thetaright
+        dist = msg.dist
+
+        if thetaleft > thetaright:
+            thetaleft = thetaleft - 2 * math.pi
+        thetaave = (thetaright - thetaleft) / 2
+
+        if thetaave < 0:
+            thetaave = thetaave + 2 * math.pi
+        thetam = self.poseTheta - thetaave
+
+        if thetam < 0:
+            thetam = thetam + 2 * math.pi
+        xm = self.poseX + dist * np.cos(thetam)
+        ym = self.poseY + dist * np.sin(thetam)
+
+        marker.pose.position.x = msg.xm
+        marker.pose.position.y = msg.ym
+        marker.pose.position.z = 0
+
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+
+        marker.scale.x = 0.5
+        marker.scale.y = 0.5
+        marker.scale.z = 0.5
+
+        marker.color.a = 1.0  # Don't forget to set the alpha!
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        self.obj_pub.publish(marker)
+        print("Marker Published")
 
     def dyn_cfg_callback(self, config, level):
         rospy.loginfo(
@@ -186,9 +245,9 @@ class Navigator:
         loads in goal if different from current goal, and replans
         """
         if (
-            data.x != self.x_g
-            or data.y != self.y_g
-            or data.theta != self.theta_g
+                data.x != self.x_g
+                or data.y != self.y_g
+                or data.theta != self.theta_g
         ):
             self.x_g = data.x
             self.y_g = data.y
@@ -213,9 +272,9 @@ class Navigator:
         self.map_probs = msg.data
         # if we've received the map metadata and have a way to update it:
         if (
-            self.map_width > 0
-            and self.map_height > 0
-            and len(self.map_probs) > 0
+                self.map_width > 0
+                and self.map_height > 0
+                and len(self.map_probs) > 0
         ):
             self.occupancy = CustomOccupancyGrid2D(
                 self.map_resolution,
@@ -245,7 +304,7 @@ class Navigator:
         start using the pose controller
         """
         return (
-            linalg.norm(np.array([self.x - self.x_g, self.y - self.y_g])) < self.near_thresh
+                linalg.norm(np.array([self.x - self.x_g, self.y - self.y_g])) < self.near_thresh
         )
 
     def at_goal(self):
@@ -254,8 +313,8 @@ class Navigator:
         accuracy to return to idle state
         """
         return (
-            linalg.norm(np.array([self.x - self.x_g, self.y - self.y_g])) < self.at_thresh
-            and abs(wrapToPi(self.theta - self.theta_g)) < self.at_thresh_theta
+                linalg.norm(np.array([self.x - self.x_g, self.y - self.y_g])) < self.at_thresh
+                and abs(wrapToPi(self.theta - self.theta_g)) < self.at_thresh_theta
         )
 
     def aligned(self):
@@ -264,13 +323,13 @@ class Navigator:
         (enough to switch to tracking controller)
         """
         return (
-            abs(wrapToPi(self.theta - self.th_init)) < self.theta_start_thresh
+                abs(wrapToPi(self.theta - self.th_init)) < self.theta_start_thresh
         )
 
     def close_to_plan_start(self):
         return (
-            abs(self.x - self.plan_start[0]) < self.start_pos_thresh
-            and abs(self.y - self.plan_start[1]) < self.start_pos_thresh
+                abs(self.x - self.plan_start[0]) < self.start_pos_thresh
+                and abs(self.y - self.plan_start[1]) < self.start_pos_thresh
         )
 
     def snap_to_grid(self, x):
@@ -359,7 +418,6 @@ class Navigator:
             V = 0.0
             om = 0.0
 
-
         # print("[navigator::publish_control] self.mode =", self.mode)
         cmd_vel = Twist()
         cmd_vel.linear.x = V
@@ -427,7 +485,7 @@ class Navigator:
         # If currently tracking a trajectory, check whether new trajectory will take more time to follow
         if self.mode == Mode.TRACK:
             t_remaining_curr = (
-                self.current_plan_duration - self.get_current_plan_time()
+                    self.current_plan_duration - self.get_current_plan_time()
             )
 
             # Estimate duration of new trajectory
@@ -479,9 +537,9 @@ class Navigator:
                 euler = tf.transformations.euler_from_quaternion(rotation)
                 self.theta = euler[2]
             except (
-                tf.LookupException,
-                tf.ConnectivityException,
-                tf.ExtrapolationException,
+                    tf.LookupException,
+                    tf.ConnectivityException,
+                    tf.ExtrapolationException,
             ) as e:
                 self.current_plan = []
                 rospy.loginfo("Navigator: waiting for state info")
@@ -504,7 +562,7 @@ class Navigator:
                     rospy.loginfo("replanning because far from start")
                     self.replan()
                 elif (
-                    rospy.get_rostime() - self.current_plan_start_time
+                        rospy.get_rostime() - self.current_plan_start_time
                 ).to_sec() > self.current_plan_duration:
                     rospy.loginfo("replanning because out of time")
                     self.replan()  # we aren't near the goal but we thought we should have been, so replan
