@@ -13,12 +13,12 @@ class DilateMap:
         self.width = self.height = None
 
         robot_size = rospy.get_param("~robot_size", 6)
-        self.correlation_filter = np.ones((robot_size // 2, robot_size // 2))
+        self.correlation_filter = np.ones((1, 1))
 
         self.OCCUPIED = 100
         self.FREE = 0
         self.UNKNOWN = -1
-        self.DILATE_PROB = rospy.get_param("~dilate_probability", self.OCCUPIED // 2)
+        self.DILATE_PROB = rospy.get_param("~dilate_probability", 30)
 
     def dilate_map(self, msg):
         output_map = OccupancyGrid()
