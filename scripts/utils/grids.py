@@ -92,11 +92,10 @@ class CustomOccupancyGrid2D(object):
     def is_free(self, state):
         # combine the probabilities of each cell by assuming independence
         # of each estimation
-        p_total = 1.0
         x, y = self.snap_to_grid((state[0], state[1]))
         grid_x = int((x - self.origin_x) / self.resolution)
         grid_y = int((y - self.origin_y) / self.resolution)
-        return self.probs[grid_y * self.width + grid_x] <= 0
+        return self.probs[grid_y * self.width + grid_x] == 0
 
     def plot(self, fig_num=0):
         fig = plt.figure(fig_num)

@@ -100,7 +100,7 @@ class Navigator:
             self.kpx, self.kpy, self.kdx, self.kdy, self.v_max, self.om_max
         )
         self.pose_controller = PoseController(
-            0.0, 0.0, 0.3, self.v_max, self.om_max
+            0.0, 0.0, 0.0, self.v_max, self.om_max
         )
         self.heading_controller = HeadingController(self.kp_th, self.om_max)
 
@@ -366,7 +366,7 @@ class Navigator:
             t_init_align = abs(th_err / self.om_max)
             t_remaining_new = t_init_align + t_new[-1]
 
-            if t_remaining_new > t_remaining_curr + 0.5:
+            if t_remaining_new > t_remaining_curr * 1.05:
                 rospy.loginfo(
                     "New plan rejected (longer duration than current plan)"
                 )
