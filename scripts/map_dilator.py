@@ -18,6 +18,7 @@ class DilateMap:
         self.OCCUPIED = 100
         self.FREE = 0
         self.UNKNOWN = -1
+        self.DILATE_PROB = rospy.get_param("~dilate_probability", 30)
 
     def dilate_map(self, msg):
         output_map = OccupancyGrid()
@@ -30,7 +31,7 @@ class DilateMap:
         new_map = old_map.reshape((self.height, self.width))
         new_map[new_map < 0] = 0
         new_map = correlate2d(new_map, self.correlation_filter, mode='same')
-        new_map[new_map > 0] = self.OCCUPIED / 2
+        new_map[new_map > 0] = self.dilated_map_pub
         new_map = new_map.flatten()
         new_map[old_map == self.OCCUPIED] = self.OCCUPIED
         new_map[old_map < 0] = self.UNKNOWN
