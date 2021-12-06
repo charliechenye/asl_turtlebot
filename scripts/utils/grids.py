@@ -74,3 +74,40 @@ class StochOccupancyGrid2D(object):
                 pts.append((x,y))
         pts_array = np.array(pts)
         plt.scatter(pts_array[:,0],pts_array[:,1],color="red",zorder=15,label='planning resolution')
+
+
+class CustomOccupancyGrid2D(object):
+    def __init__(self, resolution, width, height, origin_x, origin_y,
+                window_size, probs, thresh=0.5):
+        self.resolution = resolution
+        self.width = width
+        self.height = height
+        self.origin_x = origin_x
+        self.origin_y = origin_y
+        self.probs = probs
+
+    def snap_to_grid(self, x):
+        return self.resolution * round(x[0] / self.resolution), self.resolution * round(x[1] / self.resolution)
+
+    def is_free(self, state):
+        # combine the probabilities of each cell by assuming independence
+        # of each estimation
+        p_total = 1.0
+        x, y = self.snap_to_grid((state[0], state[1]))
+        grid_x = int((x - self.origin_x) / self.resolution)
+        grid_y = int((y - self.origin_y) / self.resolution)
+        return self.probs[grid_y * self.width + grid_x] <= 0
+
+    def plot(self, fig_num=0):
+        fig = plt.figure(fig_num)
+        pts = []
+        for i in range(len(self.probs)):
+            # convert i to (x,y)
+            gy = int(i/self.width)
+            gx = i % self.width
+            x = gx * self.resolution + self.origin_x
+            y = gy * self.resolution + self.origin_y
+            if not self.is_free((x,y)):
+                pts.append((x,y))
+        pts_array = np.array(pts)
+        plt.scatter(pts_array[:,0],pts_array[:,1],color="red",zorder=15,label='planning resolution')

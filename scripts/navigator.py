@@ -8,7 +8,7 @@ import tf
 import numpy as np
 from numpy import linalg
 from utils.utils import wrapToPi
-from utils.grids import StochOccupancyGrid2D
+from utils.grids import CustomOccupancyGrid2D
 from planners import AStar, compute_smoothed_traj
 import scipy.interpolate
 import matplotlib.pyplot as plt
@@ -174,13 +174,12 @@ class Navigator:
             and self.map_height > 0
             and len(self.map_probs) > 0
         ):
-            self.occupancy = StochOccupancyGrid2D(
+            self.occupancy = CustomOccupancyGrid2D(
                 self.map_resolution,
                 self.map_width,
                 self.map_height,
                 self.map_origin[0],
                 self.map_origin[1],
-                self.robot_size,
                 self.map_probs,
             )
             if self.x_g is not None:
