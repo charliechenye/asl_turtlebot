@@ -23,11 +23,9 @@ class PublishWayPoint:
         self.marker_size = rospy.get_param("~marker_size", 0.1)
 
         self.explore_phase = True
-        self.en_route_rescue = True
+        self.reverse_order = False
         self.delayed_publish = self.delayed_publish_exp
 
-        self.published_i = 0
-        self.rescue_waypoint_j = 1
         self.way_point_list = []
         self.way_point_viz = []
         self.location_point_list = []
@@ -120,7 +118,10 @@ theta: 1.6007259330564694
         self.total_waypoints = len(self.way_point_list)
         self.total_locations = 0
 
-        self.published_i = self.total_waypoints - 1
+        if self.reverse_order:
+            self.published_i = self.total_waypoints - 1
+        else:
+            self.published_i = 0
 
         self.retrieve_next_way_point(Bool(True))
         self.switch_to_rescue_pub.publish(Bool(False))
@@ -130,20 +131,23 @@ theta: 1.6007259330564694
             rospy.loginfo("ERROR!!!!")
             return
         if self.explore_phase:
-            if self.published_i >= -1:
-                rospy.loginfo("Received Instruction to publish waypoint %d" % self.published_i)
-                sleep(self.delayed_publish)
-                rospy.loginfo("Publishing waypoint %d" % self.published_i)
-                self.way_point_viz[self.published_i].header.stamp = rospy.Time()
-                self.way_point_viz_pub.publish(self.way_point_viz[self.published_i])
-                self.way_point_lst_pub.publish(self.way_point_list[self.published_i])
-                self.published_i -= 1
-            else:
-                rospy.loginfo("No more way points to explore. Ready to switch to rescue mode")
-                self.switch_to_rescue_pub.publish(Bool(True))
-                self.explore_phase = False
-                self.delayed_publish = self.delayed_publish_res
-                self.published_i = 0
+            if self.reverse_order:
+                if self.published_i >= -1:
+                    rospy.loginfo("Received Instruction to publish waypoint %d" % self.published_i)
+                    sleep(self.delayed_publish)
+                    rospy.loginfo("Publishing waypoint %d" % self.published_i)
+                    self.way_point_viz[self.published_i].header.stamp = rospy.Time()
+                    old_pose_2d = self.way_point_viz[self.published_i]
+                    reverse_pose_2d = Pose2D(old_pose_2d.x, old_pose_2d.y, -old_pose_2d.theta)
+                    self.way_point_viz_pub.publish(reverse_pose_2d)
+                    self.way_point_lst_pub.publish(self.way_point_list[self.published_i])
+                    self.published_i -= 1
+                else:
+                    rospy.loginfo("No more way points to explore. Ready to switch to rescue mode")
+                    self.switch_to_rescue_pub.publish(Bool(True))
+                    self.explore_phase = False
+                    self.delayed_publish = self.delayed_publish_res
+                    self.published_i = 0
         """
         if not self.explore_phase and self.rescue_waypoint_j < self.total_waypoints - 1:
             # try rescue navigation
