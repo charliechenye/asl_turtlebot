@@ -5,6 +5,7 @@ from geometry_msgs.msg import Pose2D
 from std_msgs.msg import Bool
 from visualization_msgs.msg import Marker
 from time import sleep
+from math import pi
 
 
 class PublishWayPoint:
@@ -27,6 +28,7 @@ class PublishWayPoint:
         self.delayed_publish = self.delayed_publish_exp
 
         self.way_point_list = []
+        self.way_point_list_reversed = []
         self.way_point_viz = []
         self.location_point_list = []
         self.location_point_vis = []
@@ -90,6 +92,7 @@ theta: 1.6007259330564694
                 th = float(line.split(':')[1].strip())
             else:
                 self.way_point_list.append(Pose2D(x, y, th))
+                self.way_point_list_reversed.append(Pose2D(x, y, (th + pi) % (2 * pi)))
                 marker = Marker()
                 marker.header.frame_id = "map"
                 marker.id = 0
@@ -137,10 +140,8 @@ theta: 1.6007259330564694
                     sleep(self.delayed_publish)
                     rospy.loginfo("Publishing waypoint %d" % self.published_i)
                     self.way_point_viz[self.published_i].header.stamp = rospy.Time()
-                    old_pose_2d = self.way_point_list[self.published_i]
-                    reverse_pose_2d = Pose2D(old_pose_2d.x, old_pose_2d.y, -old_pose_2d.theta)
                     self.way_point_viz_pub.publish(self.way_point_viz[self.published_i])
-                    self.way_point_lst_pub.publish(self.way_point_list[self.published_i])
+                    self.way_point_lst_pub.publish(self.way_point_list_reversed[self.published_i])
                     self.published_i -= 1
                 else:
                     rospy.loginfo("No more way points to explore. Ready to switch to rescue mode")
