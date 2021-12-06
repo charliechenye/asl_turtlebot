@@ -10,12 +10,13 @@ from time import sleep
 class PublishWayPoint:
     def __init__(self):
         rospy.init_node("turtlebot_waypoint", anonymous=False)
-        self.switch_sub = rospy.Subscriber('/retrieve_next_waypoint', Bool, self.retrieve_next_way_point)
+        rospy.Subscriber('/retrieve_next_waypoint', Bool, self.retrieve_next_way_point)
 
         # self.obj_sub = rospy.Subscriber('/object_locations', Pose2D, self.record_object)
 
         self.way_point_lst_pub = rospy.Publisher("/cmd_nav", Pose2D, queue_size=10)
         self.way_point_viz_pub = rospy.Publisher('/marker_way_point', Marker, queue_size=10)
+        self.switch_to_rescue_pub = rospy.Publisher('/cmd_switch_rescue', Bool, queue_size=10)
 
         self.delayed_publish_exp = rospy.get_param("~delay_publish_explore", 1)
         self.delayed_publish_res = rospy.get_param("~delay_publish_rescue", 1)
@@ -115,6 +116,7 @@ theta: 1.6007259330564694
         self.total_locations = 0
 
         self.retrieve_next_way_point(Bool(True))
+        self.switch_to_rescue_pub.publish(Bool(False))
 
     def retrieve_next_way_point(self, msg):
         if not msg.data:
@@ -131,6 +133,7 @@ theta: 1.6007259330564694
                 self.published_i += 1
             else:
                 rospy.loginfo("No more way points to explore. Ready to switch to rescue mode")
+                self.switch_to_rescue_pub.publish(Bool(True))
                 self.explore_phase = False
                 self.delayed_publish = self.delayed_publish_res
                 self.published_i = 0

@@ -127,6 +127,7 @@ class Navigator:
         rospy.Subscriber("/map_dilated", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)
         rospy.Subscriber("/cmd_nav", Pose2D, self.cmd_nav_callback)
+        rospy.Subscriber('/cmd_switch_rescue', Bool, self.switch_to_rescue_callback)
         ###
         # try:
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
@@ -144,6 +145,12 @@ class Navigator:
 
         self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
         print("finished init")
+
+    def switch_to_rescue_callback(self, msg):
+        if msg.data:
+            self.traj_dt = 0.5
+        else:
+            self.traj_dt = 0.1
 
     ###
     def stop_sign_detected_callback(self, msg):
