@@ -135,7 +135,7 @@ class Navigator:
         self.stop_time = rospy.get_param("~stop_time", 3.)
 
         # Minimum distance from a stop sign to obey it
-        self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.5)
+        self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.2)
 
         # Time taken to cross an intersection
         self.crossing_time = rospy.get_param("~crossing_time", 3.)
@@ -149,8 +149,10 @@ class Navigator:
     def switch_to_rescue_callback(self, msg):
         if msg.data:
             self.traj_dt = 0.5
+            self.spline_alpha = 0.05
         else:
             self.traj_dt = 0.1
+            self.spline_alpha = 0.15
 
     ###
     def stop_sign_detected_callback(self, msg):
@@ -159,9 +161,10 @@ class Navigator:
 
         # distance of the stop sign
         dist = msg.distance
+        print("stop sign detected ", dist, " from robot")
 
         # if close enough and in nav or pose mode, stop
-        if dist > 0 and dist < self.params.stop_min_dist and (self.mode == Mode.TRACK):  # or self.mode == Mode.ALIGN):
+        if dist > 0 and dist < self.stop_min_dist and (self.mode == Mode.TRACK):  # or self.mode == Mode.ALIGN):
             self.init_stop_sign()
 
     ###
@@ -291,7 +294,7 @@ class Navigator:
         """ checks if stop sign maneuver is over """
 
         return self.mode == Mode.STOP and \
-               rospy.get_rostime() - self.stop_sign_start > rospy.Duration.from_sec(self.params.stop_time)
+               rospy.get_rostime() - self.stop_sign_start > rospy.Duration.from_sec(self.stop_time)
 
     def init_crossing(self):
         """ initiates an intersection crossing maneuver """
@@ -303,7 +306,7 @@ class Navigator:
         """ checks if crossing maneuver is over """
 
         return self.mode == Mode.CROSS and \
-               rospy.get_rostime() - self.cross_start > rospy.Duration.from_sec(self.params.crossing_time)
+               rospy.get_rostime() - self.cross_start > rospy.Duration.from_sec(self.crossing_time)
 
     ###
 
