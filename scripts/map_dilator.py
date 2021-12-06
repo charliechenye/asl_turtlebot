@@ -18,7 +18,7 @@ class DilateMap:
         self.OCCUPIED = 100
         self.FREE = 0
         self.UNKNOWN = -1
-        self.DILATE_PROB = rospy.get_param("~dilate_probability", 30)
+        self.DILATE_PROB = rospy.get_param("~dilate_probability", self.OCCUPIED // 2)
 
     def dilate_map(self, msg):
         output_map = OccupancyGrid()
