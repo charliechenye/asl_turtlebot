@@ -26,14 +26,13 @@ class DilateMap:
         if self.width is None:
             self.width, self.height = msg.info.width, msg.info.height
 
-        print(type(msg.data))
-        # print(msg.data)
-        new_map = msg.data.reshape((self.height, self.width))
+        old_map = np.array(msg.data)
+        new_map = old_map.reshape((self.height, self.width))
         new_map[new_map < 0] = 0
         new_map = correlate(new_map, self.correlation_filter, mode='valid')
         new_map[new_map > 0] = self.OCCUPIED
         new_map = new_map.flatten()
-        new_map[msg.data < 0] = self.UNKNOWN
+        new_map[old_map < 0] = self.UNKNOWN
         output_map.data = new_map
 
         self.dilated_map_pub.publish(output_map)
