@@ -1,6 +1,8 @@
 <launch>
   <arg name="sim" default="true"/>
   <arg name="use_tf" default="true"/>
+  <arg name="robot_size" default="6"/>
+  <arg name="dilate_probability" default="30"/>
   <rosparam param="use_tf" subst_value="true">$(arg use_tf)</rosparam>
 
   <include file="$(find asl_turtlebot)/launch/root.launch">
@@ -12,4 +14,9 @@
     <arg name="model" default="asl_turtlebot"/>
     <arg name="sim" default="$(arg sim)"/>
   </include>
+
+  <node pkg="asl_turtlebot" type="map_dilator.py" name="map_dilator" output="screen">
+    <param name="robot_size" value="$(arg robot_size)"/>
+    <param name="dilate_probability" value="$(arg dilate_probability)"/>
+  </node>
 </launch>

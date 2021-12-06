@@ -29,14 +29,14 @@ class DilateMap:
 
         old_map = np.array(msg.data)
         new_map = old_map.reshape((self.height, self.width))
-        print(new_map)
+        # print(new_map)
         new_map[new_map < 0] = 0
         new_map[new_map > 0] = self.OCCUPIED
-        print(new_map)
+        # print(new_map)
         new_map = correlate2d(new_map, self.correlation_filter, mode='same', boundary='fill', fillvalue=self.OCCUPIED)
-        print(new_map)
+        # print(new_map)
         new_map[new_map > 0] = self.DILATE_PROB
-        print(new_map)
+        # print(new_map)
         new_map = new_map.flatten()
         # new_map[old_map == self.OCCUPIED] = self.OCCUPIED
         # print(new_map)
