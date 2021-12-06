@@ -101,7 +101,7 @@ class Detector:
 
         self.tf_listener = TransformListener()
         rospy.Subscriber(
-            "/raspicam_node/image_raw",
+            "/camera/image_raw",
             Image,
             self.camera_callback,
             queue_size=1,
@@ -115,7 +115,7 @@ class Detector:
             buff_size=2 ** 24,
         )
         rospy.Subscriber(
-            "/raspicam_node/camera_info", CameraInfo, self.camera_info_callback
+            "/camera/camera_info", CameraInfo, self.camera_info_callback
         )
         rospy.Subscriber("/scan", LaserScan, self.laser_callback)
 
