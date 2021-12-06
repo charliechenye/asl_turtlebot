@@ -137,9 +137,9 @@ theta: 1.6007259330564694
                     sleep(self.delayed_publish)
                     rospy.loginfo("Publishing waypoint %d" % self.published_i)
                     self.way_point_viz[self.published_i].header.stamp = rospy.Time()
-                    old_pose_2d = self.way_point_viz[self.published_i]
+                    old_pose_2d = self.way_point_list[self.published_i]
                     reverse_pose_2d = Pose2D(old_pose_2d.x, old_pose_2d.y, -old_pose_2d.theta)
-                    self.way_point_viz_pub.publish(reverse_pose_2d)
+                    self.way_point_viz_pub.publish(self.way_point_viz[self.published_i])
                     self.way_point_lst_pub.publish(self.way_point_list[self.published_i])
                     self.published_i -= 1
                 else:
