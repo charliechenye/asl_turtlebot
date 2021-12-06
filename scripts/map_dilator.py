@@ -13,7 +13,7 @@ class DilateMap:
         self.width = self.height = None
 
         robot_size = rospy.get_param("~robot_size", 6)
-        self.correlation_filter = np.ones((1, 1))
+        self.correlation_filter = np.ones((2, 2))
 
         self.OCCUPIED = 100
         self.FREE = 0
