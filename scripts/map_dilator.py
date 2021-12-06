@@ -31,7 +31,7 @@ class DilateMap:
         new_map = old_map.reshape((self.height, self.width))
         new_map[new_map < 0] = 0
         new_map = correlate2d(new_map, self.correlation_filter, mode='same')
-        new_map[new_map > 0] = self.dilated_map_pub
+        new_map[new_map > 0] = self.DILATE_PROB
         new_map = new_map.flatten()
         new_map[old_map == self.OCCUPIED] = self.OCCUPIED
         new_map[old_map < 0] = self.UNKNOWN
