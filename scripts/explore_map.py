@@ -12,6 +12,8 @@ class PublishWayPoint:
         rospy.init_node("turtlebot_waypoint", anonymous=False)
         self.switch_sub = rospy.Subscriber('/retrieve_next_waypoint', Bool, self.retrieve_next_way_point)
 
+        # self.obj_sub = rospy.Subscriber('/object_locations', Pose2D, self.record_object)
+
         self.way_point_lst_pub = rospy.Publisher("/cmd_nav", Pose2D, queue_size=10)
         self.way_point_viz_pub = rospy.Publisher('/marker_way_point', Marker, queue_size=10)
 

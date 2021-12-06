@@ -14,6 +14,7 @@ import scipy.interpolate
 import matplotlib.pyplot as plt
 from controllers import PoseController, TrajectoryTracker, HeadingController
 from enum import Enum
+from asl_turtlebot.msg import DetectedObject
 
 from dynamic_reconfigure.server import Server
 from asl_turtlebot.cfg import NavigatorConfig
@@ -25,6 +26,10 @@ class Mode(Enum):
     ALIGN = 1
     TRACK = 2
     PARK = 3
+    ###
+    STOP = 4
+    # CROSS = 5
+    ###
 
 
 class Navigator:
@@ -122,9 +127,37 @@ class Navigator:
         rospy.Subscriber("/map_dilated", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)
         rospy.Subscriber("/cmd_nav", Pose2D, self.cmd_nav_callback)
+        ###
+        # try:
+        rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
+        # Time to stop at a stop sign
+        self.stop_time = rospy.get_param("~stop_time", 3.)
+
+        # Minimum distance from a stop sign to obey it
+        self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.5)
+
+        # Time taken to cross an intersection
+        self.crossing_time = rospy.get_param("~crossing_time", 3.)
+        # except
+        # print("no /detector/stop_sign topic")
+        ###
 
         self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
         print("finished init")
+
+    ###
+    def stop_sign_detected_callback(self, msg):
+        """ callback for when the detector has found a stop sign. Note that
+        a distance of 0 can mean that the lidar did not pickup the stop sign at all """
+
+        # distance of the stop sign
+        dist = msg.distance
+
+        # if close enough and in nav or pose mode, stop
+        if dist > 0 and dist < self.params.stop_min_dist and (self.mode == Mode.TRACK):  # or self.mode == Mode.ALIGN):
+            self.init_stop_sign()
+
+    ###
 
     def dyn_cfg_callback(self, config, level):
         rospy.loginfo(
@@ -133,7 +166,7 @@ class Navigator:
         self.pose_controller.k1 = config["k1"]
         self.pose_controller.k2 = config["k2"]
         self.pose_controller.k3 = config["k3"]
-        
+
         self.v_max = config["v_max"]
         self.om_max = config["om_max"]
         return config
@@ -240,6 +273,33 @@ class Navigator:
         rospy.loginfo("Switching from %s -> %s", self.mode, new_mode)
         self.mode = new_mode
 
+    ###
+    def init_stop_sign(self):
+        """ initiates a stop sign maneuver """
+        # transition to STOP mode
+        self.stop_sign_start = rospy.get_rostime()
+        self.mode = Mode.STOP
+
+    def has_stopped(self):
+        """ checks if stop sign maneuver is over """
+
+        return self.mode == Mode.STOP and \
+               rospy.get_rostime() - self.stop_sign_start > rospy.Duration.from_sec(self.params.stop_time)
+
+    def init_crossing(self):
+        """ initiates an intersection crossing maneuver """
+
+        self.cross_start = rospy.get_rostime()
+        self.mode = Mode.CROSS
+
+    def has_crossed(self):
+        """ checks if crossing maneuver is over """
+
+        return self.mode == Mode.CROSS and \
+               rospy.get_rostime() - self.cross_start > rospy.Duration.from_sec(self.params.crossing_time)
+
+    ###
+
     def publish_planned_path(self, path, publisher):
         # publish planned plan for visualization
         path_msg = Path()
@@ -288,8 +348,8 @@ class Navigator:
         else:
             V = 0.0
             om = 0.0
-            
-        
+
+
         # print("[navigator::publish_control] self.mode =", self.mode)
         cmd_vel = Twist()
         cmd_vel.linear.x = V
@@ -446,6 +506,22 @@ class Navigator:
                     self.theta_g = None
                     self.switch_mode(Mode.IDLE)
                     self.next_way_point_pub.publish(Bool(True))
+            ###
+            elif self.mode == Mode.STOP:
+                # At a stop sign
+                # check if we can proceed
+                if self.has_stopped():
+                    # self.mode = Mode.CROSS
+                    self.mode = Mode.TRACK
+                    # self.init_crossing()
+
+            # elif self.mode == Mode.CROSS:
+            # Crossing an intersection
+            # check if crossing time has expired
+            # if self.has_crossed():
+            # self.mode = Mode.TRACK
+            # self.nav_to_pose()
+            ###
 
             self.publish_control()
             rate.sleep()

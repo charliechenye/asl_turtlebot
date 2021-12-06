@@ -4,41 +4,45 @@ import rospy
 import os
 # watch out on the order for the next two imports lol
 from tf import TransformListener
-try:
-    import tensorflow as tf
-except:
-    pass
+import tensorflow.compat.v1 as tf
+
+tf.disable_v2_behavior()
+# import tf as tfa
 import numpy as np
 from sensor_msgs.msg import Image, CameraInfo, LaserScan
 from asl_turtlebot.msg import DetectedObject
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import math
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Pose2D
+from nav_msgs.msg import Odometry
+
 
 def load_object_labels(filename):
     """ loads the coco object readable name """
 
-    fo = open(filename,'r')
+    fo = open(filename, 'r')
     lines = fo.readlines()
     fo.close()
     object_labels = {}
     for l in lines:
         object_id = int(l.split(':')[0])
-        label = l.split(':')[1][1:].replace('\n','').replace('-','_').replace(' ','_')
+        label = l.split(':')[1][1:].replace('\n', '').replace('-', '_').replace(' ', '_')
         object_labels[object_id] = label
 
     return object_labels
 
+
 class DetectorParams:
 
-    def __init__(self, verbose=False):
-
+    def __init__(self, verbose=True):
         # Set to True to use tensorflow and a conv net.
         # False will use a very simple color thresholding to detect stop signs only.
         self.use_tf = rospy.get_param("use_tf")
 
         # Path to the trained conv net
-        model_path = rospy.get_param("~model_path", "../../tfmodels/stop_signs_gazebo.pb")
+        model_path = rospy.get_param("~model_path", "../../tfmodels/ssd_mobilenet_v1_coco.pb")
         label_path = rospy.get_param("~label_path", "../../tfmodels/coco_labels.txt")
         self.model_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), model_path)
         self.label_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), label_path)
@@ -67,7 +71,7 @@ class Detector:
                 with tf.gfile.GFile(self.params.model_path, 'rb') as fid:
                     serialized_graph = fid.read()
                     od_graph_def.ParseFromString(serialized_graph)
-                    tf.import_graph_def(od_graph_def,name='')
+                    tf.import_graph_def(od_graph_def, name='')
                 self.image_tensor = self.detection_graph.get_tensor_by_name('image_tensor:0')
                 self.d_boxes = self.detection_graph.get_tensor_by_name('detection_boxes:0')
                 self.d_scores = self.detection_graph.get_tensor_by_name('detection_scores:0')
@@ -81,7 +85,7 @@ class Detector:
         self.fx = 1.
         self.fy = 1.
         self.laser_ranges = []
-        self.laser_angle_increment = 0.01 # this gets updated
+        self.laser_angle_increment = 0.01  # this gets updated
 
         self.object_publishers = {}
         self.object_labels = load_object_labels(self.params.label_path)
@@ -90,6 +94,7 @@ class Detector:
         rospy.Subscriber('/camera/image_raw', Image, self.camera_callback, queue_size=1)
         rospy.Subscriber('/camera/camera_info', CameraInfo, self.camera_info_callback)
         rospy.Subscriber('/scan', LaserScan, self.laser_callback)
+        rospy.Subscriber('/odom', Odometry, self.location_callback)
 
     def run_detection(self, img):
         """ runs a detection method in a given image """
@@ -103,8 +108,8 @@ class Detector:
             # good computational resources
             with self.detection_graph.as_default():
                 (boxes, scores, classes, num) = self.sess.run(
-                [self.d_boxes,self.d_scores,self.d_classes,self.num_d],
-                feed_dict={self.image_tensor: image_np_expanded})
+                    [self.d_boxes, self.d_scores, self.d_classes, self.num_d],
+                    feed_dict={self.image_tensor: image_np_expanded})
 
             return self.filter(boxes[0], scores[0], classes[0], num[0])
 
@@ -112,12 +117,14 @@ class Detector:
             # uses a simple color threshold to detect stop signs
             # this will not work in the real world, but works well in Gazebo
             # with only stop signs in the environment
-            R = image_np[:,:,0].astype(np.int) > image_np[:,:,1].astype(np.int) + image_np[:,:,2].astype(np.int)
+            R = image_np[:, :, 0].astype(np.int) > image_np[:, :, 1].astype(np.int) + image_np[:, :, 2].astype(np.int)
             Ry, Rx, = np.where(R)
-            if len(Ry)>0 and len(Rx)>0:
+            if len(Ry) > 0 and len(Rx) > 0:
                 xmin, xmax = Rx.min(), Rx.max()
                 ymin, ymax = Ry.min(), Ry.max()
-                boxes = [[float(ymin)/image_np.shape[1], float(xmin)/image_np.shape[0], float(ymax)/image_np.shape[1], float(xmax)/image_np.shape[0]]]
+                boxes = [
+                    [float(ymin) / image_np.shape[1], float(xmin) / image_np.shape[0], float(ymax) / image_np.shape[1],
+                     float(xmax) / image_np.shape[0]]]
                 scores = [.99]
                 classes = [13]
                 num = 1
@@ -135,7 +142,7 @@ class Detector:
         f_scores, f_boxes, f_classes = [], [], []
         f_num = 0
 
-        for i in range(num):
+        for i in range(int(num)):
             if scores[i] >= self.params.min_score:
                 f_scores.append(scores[i])
                 f_boxes.append(boxes[i])
@@ -172,20 +179,20 @@ class Detector:
         """ estimates the distance of an object in between two angles
         using lidar measurements """
 
-        leftray_indx = min(max(0,int(thetaleft/self.laser_angle_increment)),len(ranges))
-        rightray_indx = min(max(0,int(thetaright/self.laser_angle_increment)),len(ranges))
+        leftray_indx = min(max(0, int(thetaleft / self.laser_angle_increment)), len(ranges))
+        rightray_indx = min(max(0, int(thetaright / self.laser_angle_increment)), len(ranges))
 
-        if leftray_indx<rightray_indx:
+        if leftray_indx < rightray_indx:
             meas = ranges[rightray_indx:] + ranges[:leftray_indx]
         else:
             meas = ranges[rightray_indx:leftray_indx]
 
         num_m, dist = 0, 0
         for m in meas:
-            if m>0 and m<float('Inf'):
+            if m > 0 and m < float('Inf'):
                 dist += m
                 num_m += 1
-        if num_m>0:
+        if num_m > 0:
             dist /= num_m
 
         return dist
@@ -202,41 +209,44 @@ class Detector:
         except CvBridgeError as e:
             print(e)
 
-        (img_h,img_w,img_c) = img.shape
+        (img_h, img_w, img_c) = img.shape
 
         # runs object detection in the image
         (boxes, scores, classes, num) = self.run_detection(img)
 
         if num > 0:
             # some objects were detected
-            for (box,sc,cl) in zip(boxes, scores, classes):
-                ymin = int(box[0]*img_h)
-                xmin = int(box[1]*img_w)
-                ymax = int(box[2]*img_h)
-                xmax = int(box[3]*img_w)
-                xcen = int(0.5*(xmax-xmin)+xmin)
-                ycen = int(0.5*(ymax-ymin)+ymin)
+            for (box, sc, cl) in zip(boxes, scores, classes):
+                ymin = int(box[0] * img_h)
+                xmin = int(box[1] * img_w)
+                ymax = int(box[2] * img_h)
+                xmax = int(box[3] * img_w)
+                xcen = int(0.5 * (xmax - xmin) + xmin)
+                ycen = int(0.5 * (ymax - ymin) + ymin)
 
-                cv2.rectangle(img_bgr8, (xmin,ymin), (xmax,ymax), (255,0,0), 2)
+                cv2.rectangle(img_bgr8, (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
 
                 # computes the vectors in camera frame corresponding to each sides of the box
-                rayleft = self.project_pixel_to_ray(xmin,ycen)
-                rayright = self.project_pixel_to_ray(xmax,ycen)
+                rayleft = self.project_pixel_to_ray(xmin, ycen)
+                rayright = self.project_pixel_to_ray(xmax, ycen)
 
                 # convert the rays to angles (with 0 poiting forward for the robot)
-                thetaleft = math.atan2(-rayleft[0],rayleft[2])
-                thetaright = math.atan2(-rayright[0],rayright[2])
-                if thetaleft<0:
-                    thetaleft += 2.*math.pi
-                if thetaright<0:
-                    thetaright += 2.*math.pi
+                thetaleft = math.atan2(-rayleft[0], rayleft[2])
+                thetaright = math.atan2(-rayright[0], rayright[2])
+                if thetaleft < 0:
+                    thetaleft += 2. * math.pi
+                if thetaright < 0:
+                    thetaright += 2. * math.pi
 
                 # estimate the corresponding distance using the lidar
-                dist = self.estimate_distance(thetaleft,thetaright,img_laser_ranges)
+                dist = self.estimate_distance(thetaleft, thetaright, img_laser_ranges)
+
+                # individaul channel of each object
+                # /detector DectedObject.objid
 
                 if cl not in self.object_publishers:
-                    self.object_publishers[cl] = rospy.Publisher('/detector/'+self.object_labels[cl],
-                        DetectedObject, queue_size=10)
+                    self.object_publishers[cl] = rospy.Publisher('/detector/' + self.object_labels[cl],
+                                                                 DetectedObject, queue_size=10)
 
                 # publishes the detected object and its location
                 object_msg = DetectedObject()
@@ -246,8 +256,14 @@ class Detector:
                 object_msg.distance = dist
                 object_msg.thetaleft = thetaleft
                 object_msg.thetaright = thetaright
-                object_msg.corners = [ymin,xmin,ymax,xmax]
+                object_msg.corners = [ymin, xmin, ymax, xmax]
                 self.object_publishers[cl].publish(object_msg)
+
+                rospy.init_node('marker_node', anonymous=True)
+                self.obj_pub = rospy.Publisher('marker_topic', Marker, queue_size=10)
+                # location for the object (x, y) Navigators within radius r
+                self.marker_sub = rospy.Subscriber('/detector/' + self.object_labels[cl], DetectedObject,
+                                                   self.object_callback)
 
         # displays the camera image
         cv2.imshow("Camera", img_bgr8)
@@ -260,7 +276,7 @@ class Detector:
 
         ########## Code starts here ##########
         # DONE: Extract camera intrinsic parameters.
-        k = msg.K	# 3x3 row major matrix, i.e. flatten out to 1D
+        k = msg.K  # 3x3 row major matrix, i.e. flatten out to 1D
         self.cx = k[2]
         self.cy = k[5]
         self.fx = k[0]
@@ -273,9 +289,66 @@ class Detector:
         self.laser_ranges = msg.ranges
         self.laser_angle_increment = msg.angle_increment
 
+    def location_callback(self, msg):
+        # we need to figure out how to correctly pull the x,y,theta
+        self.poseX = msg.pose.pose.position.x
+        self.poseY = msg.pose.pose.position.y
+        quaternion = (msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z,
+                      msg.pose.pose.orientation.w)
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        self.poseTheta = euler[2]
+
+    def object_callback(self, msg):
+        marker = Marker()
+
+        marker.header.frame_id = "odom"
+        marker.header.stamp = rospy.Time()
+
+        # IMPORTANT: If you're creating multiple markers, # each need to have a separate marker ID.
+        marker.id = msg.id
+        marker.type = 2  # sphere
+
+        thetaleft = msg.thetaleft
+        thetaright = msg.thetaright
+        dist = msg.dist
+
+        if thetaleft > thetaright:
+            thetaleft = thetaleft - 2 * math.pi
+        thetaave = (thetaright - thetaleft) / 2
+
+        if thetaave < 0:
+            thetaave = thetaave + 2 * math.pi
+        thetam = self.poseTheta - thetaave
+
+        if thetam < 0:
+            thetam = thetam + 2 * math.pi
+        xm = self.poseX + dist * np.cos(thetam)
+        ym = self.poseY + dist * np.sin(thetam)
+
+        marker.pose.position.x = msg.xm
+        marker.pose.position.y = msg.ym
+        marker.pose.position.z = 0
+
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+
+        marker.scale.x = 0.5
+        marker.scale.y = 0.5
+        marker.scale.z = 0.5
+
+        marker.color.a = 1.0  # Don't forget to set the alpha!
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        self.obj_pub.publish(marker)
+        print("Marker Published")
+
     def run(self):
         rospy.spin()
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     d = Detector()
     d.run()
