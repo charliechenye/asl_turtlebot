@@ -39,7 +39,8 @@ class DilateMap:
         new_map = new_map.flatten()
         new_map[old_map == self.OCCUPIED] = self.OCCUPIED
         print(new_map)
-        new_map[old_map < 0] = self.UNKNOWN
+        new_map[np.array(msg.data) < 0] = self.UNKNOWN
+        print(new_map)
         output_map.data = new_map.astype(int).tolist()
 
         self.dilated_map_pub.publish(output_map)
