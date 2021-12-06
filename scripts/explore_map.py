@@ -20,6 +20,7 @@ class PublishWayPoint:
         self.marker_size = rospy.get_param("~marker_size", 0.1)
 
         self.explore_phase = True
+        self.en_route_rescue = True
         self.delayed_publish = self.delayed_publish_exp
 
         self.published_i = 0
@@ -120,7 +121,28 @@ class PublishWayPoint:
                 self.published_i += 1
             else:
                 rospy.loginfo("No more way points to explore. Ready to switch to rescue mode")
-
+                self.explore_phase = False
+                self.delayed_publish = self.delayed_publish_res
+                self.published_i = 0
+        if not self.explore_phase and self.published_i < self.total_waypoints - 1:
+            # try rescue navigation
+            if self.en_route_rescue:
+                rospy.loginfo("Received Instruction to publish waypoint %d" % self.published_i)
+                sleep(self.delayed_publish)
+                rospy.loginfo("Publishing waypoint %d" % self.published_i)
+                self.way_point_viz[self.published_i].header.stamp = rospy.Time()
+                self.way_point_viz_pub.publish(self.way_point_viz[self.published_i])
+                self.way_point_lst_pub.publish(self.way_point_list[self.published_i])
+                self.published_i += 1
+                self.en_route_rescue = False
+            else:
+                rospy.loginfo("Received Instruction to home waypoint")
+                sleep(self.delayed_publish)
+                rospy.loginfo("Publishing home address")
+                self.way_point_viz[self.published_i].header.stamp = rospy.Time()
+                self.way_point_viz_pub.publish(self.way_point_viz[-1])
+                self.way_point_lst_pub.publish(self.way_point_list[-1])
+                self.en_route_rescue = True
 
     def run(self):
         rospy.spin()
