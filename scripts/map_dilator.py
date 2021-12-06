@@ -12,7 +12,7 @@ class DilateMap:
         self.dilated_map_pub = rospy.Publisher("/map_dilated", OccupancyGrid, queue_size=10)
         self.width = self.height = None
 
-        robot_size = rospy.get_param("~robot_size", 6)
+        robot_size = rospy.get_param("~robot_size", )
         self.correlation_filter = np.ones((robot_size, robot_size))
 
         self.OCCUPIED = 100
@@ -38,10 +38,8 @@ class DilateMap:
         new_map[new_map > 0] = self.DILATE_PROB
         print(new_map)
         new_map = new_map.flatten()
-        new_map[old_map == self.OCCUPIED] = self.OCCUPIED
-        print(new_map)
-        new_map[np.array(msg.data) < 0] = self.UNKNOWN
-        print(new_map)
+        # new_map[old_map == self.OCCUPIED] = self.OCCUPIED
+        # print(new_map)
         output_map.data = new_map.astype(int).tolist()
 
         self.dilated_map_pub.publish(output_map)
