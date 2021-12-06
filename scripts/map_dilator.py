@@ -33,7 +33,7 @@ class DilateMap:
         new_map[new_map > 0] = self.OCCUPIED
         new_map = new_map.flatten()
         new_map[old_map < 0] = self.UNKNOWN
-        output_map.data = new_map
+        output_map.data = new_map.tolist()
 
         self.dilated_map_pub.publish(output_map)
 
