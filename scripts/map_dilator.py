@@ -2,7 +2,7 @@
 
 import rospy
 from nav_msgs.msg import OccupancyGrid
-from scipy import correlate
+from scipy.signal import correlate2d
 import numpy as np
 
 class DilateMap:
@@ -29,7 +29,7 @@ class DilateMap:
         old_map = np.array(msg.data)
         new_map = old_map.reshape((self.height, self.width))
         new_map[new_map < 0] = 0
-        new_map = correlate(new_map, self.correlation_filter, mode='valid')
+        new_map = correlate2d(new_map, self.correlation_filter, mode='same')
         new_map[new_map > 0] = self.OCCUPIED
         new_map = new_map.flatten()
         new_map[old_map < 0] = self.UNKNOWN
