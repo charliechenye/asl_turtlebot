@@ -1,11 +1,19 @@
 <launch>
   <arg name="v_max" default="0.2"/>
   <arg name="om_max" default="0.4"/>
+  <arg name="robot_size" default="6"/>
   <arg name="kbd_flg" default='false'/>
+  <arg name="stop_sign_time" default="3"/>
+  <arg name="stop_min_dist" default="0.6"/>
+  <arg name="crossing_time" default="3"/>
 
   <node pkg="asl_turtlebot" type="navigator.py" name="navigator" output="screen">
     <param name="v_max" value="$(arg v_max)"/>
     <param name="om_max" value="$(arg om_max)"/>
+    <param name="robot_size" value="$(arg robot_size)"/>
+    <param name="stop_sign_time" value="$(arg stop_sign_time)"/>
+    <param name="stop_min_dist" value="$(arg stop_min_dist)"/>
+    <param name="crossing_time" value="$(arg crossing_time)"/>
   </node>
 
   <node pkg="asl_turtlebot" type="switch.py" name="switch" output="screen">

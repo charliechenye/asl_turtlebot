@@ -142,13 +142,13 @@ class Navigator:
         # try:
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         # Time to stop at a stop sign
-        self.stop_time = rospy.get_param("~stop_time", 3.)
+        self.stop_time = rospy.get_param("~stop_sign_time", 3.)
 
         # Minimum distance from a stop sign to obey it
         self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.6)
        
         # Time taken to cross an intersection
-        self.crossing_time = rospy.get_param("~crossing_time", 15.)
+        self.crossing_time = rospy.get_param("~crossing_time", 3.)
 
         self.cross_start = None
         self.stop_sign_start = None
@@ -365,7 +365,7 @@ class Navigator:
 
     def init_crossing(self):
         """ initiates an intersection crossing maneuver """
-        rospy.loginfo("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH: initialize crossing")
+        rospy.loginfo("Stop Sign: initialize crossing")
         self.cross_start = rospy.get_rostime()
         self.switch_mode(Mode.CROSS)
 
@@ -533,11 +533,13 @@ class Navigator:
             self.switch_mode(Mode.ALIGN)
             return
 
-        if self.mode != Mode.STOP:
+        if self.mode == Mode.STOP:
+            rospy.loginfo("Stopped for Stop Sign")
+        elif self.mode == Mode.CROSS:
+            rospy.loginfo("Protected for Crossing")
+        else:
             rospy.loginfo("Ready to track")
             self.switch_mode(Mode.TRACK)
-        else:
-            rospy.loginfo("Stopped for Stop Sign")
 
     def run(self):
         rate = rospy.Rate(10)  # 10 Hz
@@ -594,7 +596,7 @@ class Navigator:
                 # At a stop sign
                 # check if we can proceed
                 if self.has_stopped():
-                    rospy.loginfo("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH: finished stopping")
+                    rospy.loginfo("Stop Sign: finished stopping")
                     self.init_crossing()
 
             elif self.mode == Mode.CROSS:
