@@ -2,16 +2,19 @@
 
 import rospy
 from geometry_msgs.msg import Pose2D
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Int32
 from visualization_msgs.msg import Marker
 from time import sleep
 from math import pi
+from asl_turtlebot.msg import DetectedObjectLocation
 
 
 class PublishWayPoint:
     def __init__(self):
         rospy.init_node("turtlebot_waypoint", anonymous=False)
         rospy.Subscriber('/retrieve_next_waypoint', Bool, self.retrieve_next_way_point)
+        rospy.Subscriber('/detected/robot_location', DetectedObjectLocation, self.record_location)
+        rospy.Subscriber('/detected/n_objects', Int32, self.record_n_objects)
 
         # self.obj_sub = rospy.Subscriber('/object_locations', Pose2D, self.record_object)
 
@@ -30,8 +33,10 @@ class PublishWayPoint:
         self.way_point_list = []
         self.way_point_list_reversed = []
         self.way_point_viz = []
-        self.location_point_list = []
-        self.location_point_vis = []
+        self.location_point_list = {}
+
+        self.n_objects = 0
+        self.received_objects = 0
         # Preset Way Points
         s = """
 x: 3.321861347827481
@@ -186,6 +191,21 @@ theta: 1.6007259330564694
                 self.way_point_lst_pub.publish(self.way_point_list[-1])
                 self.en_route_rescue = True
         """
+
+    def record_location(self, msg):
+        self.received_objects += 1
+        if msg.name == 'stop_sign':
+            rospy.loginfo("Ignoring Stop Sign")
+        else:
+            rospy.loginfo("Received location for %s" % msg.name)
+            self.location_point_list[msg.name] = msg.loc
+        if 0 < self.n_objects == self.received_objects:
+            self.retrieve_next_way_point(Bool(True))
+
+    def record_n_objects(self, msg):
+        self.n_objects = msg.data
+        if self.n_objects == self.received_objects:
+            self.retrieve_next_way_point(Bool(True))
 
     def run(self):
         rospy.spin()
