@@ -131,6 +131,8 @@ class Navigator:
         self.obj_pub = rospy.Publisher('/detected/object_location', Marker, queue_size=10)
         
         self.pose_pub = rospy.Publisher('/detected/robot_location',Pose2D, queue_size=10)
+        
+        self.object_detected = False
 
         rospy.Subscriber("/map_dilated", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)
@@ -185,8 +187,17 @@ class Navigator:
                       msg.pose.pose.orientation.w)
         euler = tf.transformations.euler_from_quaternion(quaternion)
         self.poseTheta = euler[2]
+        if self.object_detected == True:
+            pose = Pose2D()
+            pose.x = self.poseX
+            pose.y = self.poseY
+            pose.theta = self.poseTheta
+            self.pose_pub.publish(pose)
+            self.object_detected = False
+            
 
     def detected_object_callback(self, msg):
+        self.object_detected = True
         rospy.loginfo(
             "detected object callack values: id:%d" % msg.id
         )
