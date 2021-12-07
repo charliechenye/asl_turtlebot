@@ -148,7 +148,7 @@ class Navigator:
         self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.6)
        
         # Time taken to cross an intersection
-        self.crossing_time = rospy.get_param("~crossing_time", 3.)
+        self.crossing_time = rospy.get_param("~crossing_time", 15.)
 
         self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
         print("finished init")
@@ -184,6 +184,9 @@ class Navigator:
         self.poseTheta = euler[2]
 
     def detected_object_callback(self, msg):
+        rospy.loginfo(
+            "detected object callack values: id:%d" % msg.id
+        )
         marker = Marker()
 
         marker.header.frame_id = "odom"
@@ -195,18 +198,18 @@ class Navigator:
 
         thetaleft = msg.thetaleft
         thetaright = msg.thetaright
-        dist = msg.dist
+        dist = msg.distance
 
         if thetaleft > thetaright:
-            thetaleft = thetaleft - 2 * math.pi
+            thetaleft = thetaleft - 2 * np.pi
         thetaave = (thetaright - thetaleft) / 2
 
         if thetaave < 0:
-            thetaave = thetaave + 2 * math.pi
+            thetaave = thetaave + 2 * np.pi
         thetam = self.poseTheta - thetaave
 
         if thetam < 0:
-            thetam = thetam + 2 * math.pi
+            thetam = thetam + 2 * np.pi
         xm = self.poseX + dist * np.cos(thetam)
         ym = self.poseY + dist * np.sin(thetam)
 
@@ -349,7 +352,7 @@ class Navigator:
         """ initiates a stop sign maneuver """
         # transition to STOP mode
         self.stop_sign_start = rospy.get_rostime()
-        self.mode = Mode.STOP
+        self.switch_mode(Mode.STOP)
 
     def has_stopped(self):
         """ checks if stop sign maneuver is over """
@@ -361,7 +364,7 @@ class Navigator:
         """ initiates an intersection crossing maneuver """
 
         self.cross_start = rospy.get_rostime()
-        self.mode = Mode.CROSS
+        # self.mode = Mode.CROSS
 
     def has_crossed(self):
         """ checks if crossing maneuver is over """
@@ -585,16 +588,17 @@ class Navigator:
                 # At a stop sign
                 # check if we can proceed
                 if self.has_stopped():
-                    self.mode = Mode.CROSS
-                    #self.mode = Mode.TRACK
-                    self.object_labelsself.init_crossing()
+                    self.switch_mode(Mode.CROSS)
+                    # self.mode = Mode.TRACK
+                    # self.object_labels
+                    self.init_crossing()
 
             elif self.mode == Mode.CROSS:
                 # Crossing an intersection
                 # check if crossing time has expired
                 if self.has_crossed():
-                    self.mode = Mode.TRACK
-                self.nav_to_pose()
+                    self.switch_mode(Mode.TRACK)
+                #self.nav_to_pose()
             ###
 
             self.publish_control()
