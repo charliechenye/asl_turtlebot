@@ -104,6 +104,7 @@ class Detector:
 
         self.object_publishers = {}
         self.published_objects = []
+        self.published_objects_conf = []
         self.object_labels = load_object_labels(self.params.label_path)
 
         self.tf_listener = TransformListener()
@@ -295,6 +296,13 @@ class Detector:
                     if self.object_labels[cl] not in self.published_objects:
                         self.object_publishers[1].publish(object_msg)
                         self.published_objects.append(self.object_labels[cl])
+                        self.published_objects_conf.append(sc)
+                    else:
+                        label = self.object_labels[cl]
+                        ind = self.published_objects.index(label)
+                        if sc > self.published_objects_conf[ind]:
+                            self.object_publishers[1].publish(object_msg)
+                            self.published_objects_conf[ind] = sc
 
                 # self.object_publishers[cl].publish(object_msg)
 
