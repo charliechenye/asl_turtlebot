@@ -24,7 +24,7 @@ class PublishWayPoint:
         self.marker_size = rospy.get_param("~marker_size", 0.1)
 
         self.explore_phase = True
-        self.reverse_order = True
+        self.reverse_order = False
         self.delayed_publish = self.delayed_publish_exp
 
         self.way_point_list = []
