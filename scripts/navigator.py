@@ -20,7 +20,7 @@ from dynamic_reconfigure.server import Server
 from asl_turtlebot.cfg import NavigatorConfig
 
 from visualization_msgs.msg import Marker
-from geometry_msgs.msg import Pose2D
+from geometry_msgs.msg import Pose2D, Point
 from nav_msgs.msg import Odometry
 
 
@@ -129,6 +129,7 @@ class Navigator:
         self.cfg_srv = Server(NavigatorConfig, self.dyn_cfg_callback)
         
         self.obj_pub = rospy.Publisher('/detected/object_location', Marker, queue_size=10)
+        self.fov_pub = rospy.Publisher('/fov_marker', Marker, queue_size=10)
         
         self.pose_pub = rospy.Publisher('/detected/robot_location',Pose2D, queue_size=10)
         
@@ -157,6 +158,52 @@ class Navigator:
 
         self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
         print("finished init")
+        
+        while not rospy.is_shutdown():
+            # Frame visualization
+            marker = Marker()
+            marker.header.frame_id = "base_footprint"
+            marker.header.stamp = rospy.Time()
+
+            # IMPORTANT: If you're creating multiple markers, # each need to have a separate marker ID.
+            # using 200 to stay clear of 0-180 which are possible from detector
+            marker.id = 200
+            marker.type = 5 
+            marker.color.g = 1.0
+            marker.scale.x = 0.01
+            marker.color.a = 1.0
+            #marker.lifetime = rospy.Duration(10)
+            marker.action = 0
+            points = []
+            xvar = 0.6
+            yvar = 0.2
+            height = 0.6
+            corners = [Point(xvar,yvar,height), Point(xvar,-yvar,height), Point(xvar,yvar,0), Point(xvar,-yvar,0)]
+            origin = Point(0,0,0)
+            
+            points.append(origin)
+            points.append(corners[0])
+            points.append(origin)
+            points.append(corners[1])
+            points.append(origin)
+            points.append(corners[2])
+            points.append(origin)
+            points.append(corners[3])
+            
+            points.append(corners[0])
+            points.append(corners[1])
+            points.append(corners[0])
+            points.append(corners[2])
+            points.append(corners[2])
+            points.append(corners[3])
+            points.append(corners[1])
+            points.append(corners[3])
+        
+            marker.points = points
+            #print(marker.points)
+        
+            self.fov_pub.publish(marker)
+
 
     def switch_to_rescue_callback(self, msg):
         if msg.data:
@@ -187,6 +234,7 @@ class Navigator:
                       msg.pose.pose.orientation.w)
         euler = tf.transformations.euler_from_quaternion(quaternion)
         self.poseTheta = euler[2]
+        
         if self.object_detected == True:
             pose = Pose2D()
             pose.x = self.poseX
