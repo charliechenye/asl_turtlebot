@@ -197,48 +197,49 @@ class Navigator:
             
 
     def detected_object_callback(self, msg):
-        self.object_detected = True
-        rospy.loginfo(
+        if msg.name not in ['airplane','person','bed','microwave','tv']:
+            self.object_detected = True
+            rospy.loginfo(
             "detected object callack values: id:%d" % msg.id
-        )
-        marker = Marker()
+            )
+            marker = Marker()
 
-        marker.header.frame_id = "odom"
-        marker.header.stamp = rospy.Time()
+            marker.header.frame_id = "odom"
+            marker.header.stamp = rospy.Time()
 
-        # IMPORTANT: If you're creating multiple markers, # each need to have a separate marker ID.
-        marker.id = msg.id
-        marker.type = 2  # sphere
+            # IMPORTANT: If you're creating multiple markers, # each need to have a separate marker ID.
+            marker.id = msg.id
+            marker.type = 2  # sphere
 
-        dist = msg.distance
-        thetaleft = wrapToPi(msg.thetaleft)
-        thetaright = wrapToPi(msg.thetaright)
+            dist = msg.distance
+            thetaleft = wrapToPi(msg.thetaleft)
+            thetaright = wrapToPi(msg.thetaright)
 
-        theta_mid = (thetaleft + thetaright) / 2
-        theta_obj = self.poseTheta + theta_mid
+            theta_mid = (thetaleft + thetaright) / 2
+            theta_obj = self.poseTheta + theta_mid
 
-        x_obj = self.poseX + dist * np.cos(theta_obj)
-        y_obj = self.poseY + dist * np.sin(theta_obj)
+            x_obj = self.poseX + dist * np.cos(theta_obj)
+            y_obj = self.poseY + dist * np.sin(theta_obj)
 
-        marker.pose.position.x = x_obj
-        marker.pose.position.y = y_obj
-        marker.pose.position.z = 0
+            marker.pose.position.x = x_obj
+            marker.pose.position.y = y_obj
+            marker.pose.position.z = 0
 
-        marker.pose.orientation.x = 0.0
-        marker.pose.orientation.y = 0.0
-        marker.pose.orientation.z = 0.0
-        marker.pose.orientation.w = 1.0
+            marker.pose.orientation.x = 0.0
+            marker.pose.orientation.y = 0.0
+            marker.pose.orientation.z = 0.0
+            marker.pose.orientation.w = 1.0
 
-        marker.scale.x = 0.2
-        marker.scale.y = 0.2
-        marker.scale.z = 0.2
+            marker.scale.x = 0.2
+            marker.scale.y = 0.2
+            marker.scale.z = 0.2
 
-        marker.color.a = 1.0  # Don't forget to set the alpha!
-        marker.color.r = 1.0
-        marker.color.g = 1.0
-        marker.color.b = 0.0
-        self.obj_pub.publish(marker)
-        rospy.loginfo("Objected Marker Published")
+            marker.color.a = 1.0  # Don't forget to set the alpha!
+            marker.color.r = 1.0
+            marker.color.g = 1.0
+            marker.color.b = 0.0
+            self.obj_pub.publish(marker)
+            rospy.loginfo("Objected Marker Published")
 
     def dyn_cfg_callback(self, config, level):
         rospy.loginfo(
