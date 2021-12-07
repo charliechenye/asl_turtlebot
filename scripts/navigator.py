@@ -583,7 +583,7 @@ class Navigator:
                 if self.has_stopped():
                     self.mode = Mode.CROSS
                     #self.mode = Mode.TRACK
-                    self.init_crossing()
+                    self.object_labelsself.init_crossing()
 
             elif self.mode == Mode.CROSS:
                 # Crossing an intersection
