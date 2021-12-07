@@ -199,25 +199,18 @@ class Navigator:
         marker.id = msg.id
         marker.type = 2  # sphere
 
-        thetaleft = msg.thetaleft
-        thetaright = msg.thetaright
         dist = msg.distance
+        thetaleft = wrapToPi(msg.thetaleft)
+        thetaright = wrapToPi(msg.thetaright)
 
-        if thetaright > thetaleft:
-            thetaright = thetaright - 2 * np.pi
-        thetaave = (thetaleft - thetaright) / 2
+        theta_mid = (thetaleft + thetaright) / 2
+        theta_obj = self.poseTheta - theta_mid
 
-        if thetaave < 0:
-            thetaave = thetaave + 2 * np.pi
-        thetam = self.poseTheta - thetaave
+        x_obj = self.poseX + dist * np.cos(theta_obj)
+        y_obj = self.poseY + dist * np.sin(theta_obj)
 
-        if thetam < 0:
-            thetam = thetam + 2 * np.pi
-        xm = self.poseX + dist * np.cos(thetam)
-        ym = self.poseY + dist * np.sin(thetam)
-
-        marker.pose.position.x = xm
-        marker.pose.position.y = ym
+        marker.pose.position.x = x_obj
+        marker.pose.position.y = y_obj
         marker.pose.position.z = 0
 
         marker.pose.orientation.x = 0.0
@@ -234,7 +227,7 @@ class Navigator:
         marker.color.g = 0.0
         marker.color.b = 1.0
         self.obj_pub.publish(marker)
-        print("Marker Published")
+        rospy.loginfo("Objected Marker Published")
 
     def dyn_cfg_callback(self, config, level):
         rospy.loginfo(
