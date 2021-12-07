@@ -200,9 +200,9 @@ class Navigator:
         thetaright = msg.thetaright
         dist = msg.distance
 
-        if thetaleft > thetaright:
-            thetaleft = thetaleft - 2 * np.pi
-        thetaave = (thetaright - thetaleft) / 2
+        if thetaright > thetaleft:
+            thetaright = thetaright - 2 * np.pi
+        thetaave = (thetaleft - thetaright) / 2
 
         if thetaave < 0:
             thetaave = thetaave + 2 * np.pi
@@ -222,14 +222,14 @@ class Navigator:
         marker.pose.orientation.z = 0.0
         marker.pose.orientation.w = 1.0
 
-        marker.scale.x = 0.5
-        marker.scale.y = 0.5
-        marker.scale.z = 0.5
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
 
         marker.color.a = 1.0  # Don't forget to set the alpha!
-        marker.color.r = 1.0
+        marker.color.r = 0.0
         marker.color.g = 0.0
-        marker.color.b = 0.0
+        marker.color.b = 1.0
         self.obj_pub.publish(marker)
         print("Marker Published")
 
