@@ -32,7 +32,7 @@ class Mode(Enum):
     PARK = 3
     ###
     STOP = 4
-    # CROSS = 5
+    CROSS = 5
     ###
 
 
@@ -145,7 +145,7 @@ class Navigator:
         self.stop_time = rospy.get_param("~stop_time", 3.)
 
         # Minimum distance from a stop sign to obey it
-        self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.4)
+        self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.6)
        
         # Time taken to cross an intersection
         self.crossing_time = rospy.get_param("~crossing_time", 3.)
@@ -210,8 +210,8 @@ class Navigator:
         xm = self.poseX + dist * np.cos(thetam)
         ym = self.poseY + dist * np.sin(thetam)
 
-        marker.pose.position.x = msg.xm
-        marker.pose.position.y = msg.ym
+        marker.pose.position.x = xm
+        marker.pose.position.y = ym
         marker.pose.position.z = 0
 
         marker.pose.orientation.x = 0.0
@@ -416,6 +416,10 @@ class Navigator:
             V, om = self.heading_controller.compute_control(
                 self.x, self.y, self.theta, t
             )
+        elif self.mode == Mode.CROSS:
+            V, om = self.traj_controller.compute_control(
+                self.x, self.y, self.theta, t
+            )
         else:
             V = 0.0
             om = 0.0
@@ -429,7 +433,7 @@ class Navigator:
     def get_current_plan_time(self):
         t = (rospy.get_rostime() - self.current_plan_start_time).to_sec()
         return max(0.0, t)  # clip negative time to 0
-
+    
     def replan(self):
         """
         loads goal into pose controller
@@ -590,7 +594,7 @@ class Navigator:
                 # check if crossing time has expired
                 if self.has_crossed():
                     self.mode = Mode.TRACK
-            # self.nav_to_pose()
+                self.nav_to_pose()
             ###
 
             self.publish_control()
