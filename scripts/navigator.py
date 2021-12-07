@@ -161,48 +161,48 @@ class Navigator:
         
         while not rospy.is_shutdown():
             # Frame visualization
-            marker = Marker()
-            marker.header.frame_id = "base_footprint"
-            marker.header.stamp = rospy.Time()
+            camera_pov_marker = Marker()
+            camera_pov_marker.header.frame_id = "base_footprint"
+            camera_pov_marker.header.stamp = rospy.Time()
 
-            # IMPORTANT: If you're creating multiple markers, # each need to have a separate marker ID.
+            # IMPORTANT: If you're creating multiple markers, # each need to have a separate camera_pov_marker ID.
             # using 200 to stay clear of 0-180 which are possible from detector
-            marker.id = 200
-            marker.type = 5 
-            marker.color.g = 1.0
-            marker.scale.x = 0.01
-            marker.color.a = 1.0
-            #marker.lifetime = rospy.Duration(10)
-            marker.action = 0
-            points = []
-            xvar = 0.6
-            yvar = 0.2
-            height = 0.6
-            corners = [Point(xvar,yvar,height), Point(xvar,-yvar,height), Point(xvar,yvar,0), Point(xvar,-yvar,0)]
-            origin = Point(0,0,0)
+            camera_pov_marker.id = 200
+            camera_pov_marker.type = 5
+            camera_pov_marker.color.g = 1.0
+            camera_pov_marker.scale.x = 0.01
+            camera_pov_marker.color.a = 1.0
+            #camera_pov_marker.lifetime = rospy.Duration(10)
+            camera_pov_marker.action = 0
+            camera_points = []
+            camera_xvar = 0.6
+            camera_yvar = 0.2
+            camera_height = 0.6
+            corners = [Point(camera_xvar,camera_yvar,camera_height), Point(camera_xvar,-camera_yvar,camera_height), Point(camera_xvar,camera_yvar,0), Point(camera_xvar,-camera_yvar,0)]
+            camera_base = Point(0,0,0)
             
-            points.append(origin)
-            points.append(corners[0])
-            points.append(origin)
-            points.append(corners[1])
-            points.append(origin)
-            points.append(corners[2])
-            points.append(origin)
-            points.append(corners[3])
+            camera_points.append(camera_base)
+            camera_points.append(corners[0])
+            camera_points.append(camera_base)
+            camera_points.append(corners[1])
+            camera_points.append(camera_base)
+            camera_points.append(corners[2])
+            camera_points.append(camera_base)
+            camera_points.append(corners[3])
             
-            points.append(corners[0])
-            points.append(corners[1])
-            points.append(corners[0])
-            points.append(corners[2])
-            points.append(corners[2])
-            points.append(corners[3])
-            points.append(corners[1])
-            points.append(corners[3])
+            camera_points.append(corners[0])
+            camera_points.append(corners[1])
+            camera_points.append(corners[0])
+            camera_points.append(corners[2])
+            camera_points.append(corners[2])
+            camera_points.append(corners[3])
+            camera_points.append(corners[1])
+            camera_points.append(corners[3])
         
-            marker.points = points
-            #print(marker.points)
+            camera_pov_marker.points = camera_points
+            #print(camera_pov_marker.camera_points)
         
-            self.fov_pub.publish(marker)
+            self.fov_pub.publish(camera_pov_marker)
 
 
     def switch_to_rescue_callback(self, msg):
