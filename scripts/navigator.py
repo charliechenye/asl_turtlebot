@@ -127,6 +127,8 @@ class Navigator:
         self.trans_listener = tf.TransformListener()
 
         self.cfg_srv = Server(NavigatorConfig, self.dyn_cfg_callback)
+        
+        self.obj_pub = rospy.Publisher('marker_topic', Marker, queue_size=10)
 
         rospy.Subscriber("/map_dilated", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)

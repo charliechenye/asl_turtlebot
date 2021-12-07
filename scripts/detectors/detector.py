@@ -280,7 +280,15 @@ class Detector:
                 object_msg.thetaleft = thetaleft
                 object_msg.thetaright = thetaright
                 object_msg.corners = [ymin, xmin, ymax, xmax]
-
+		
+		
+		# dector publishes theta, distance, id to navigator
+		# navigator computes location and publishes /detected/object_location (Marker)
+		# navigator records down currrent position (x, y, theta) from odom when it received the object # /detected/robot_location (Pose2D)
+		# explore_map remembers it.
+		# threshold high .7
+		# maybe in navigator filter out on id
+		
                 if self.object_labels[cl] == 'stop_sign':
                     self.object_publishers[0].publish(object_msg)
                 else:
