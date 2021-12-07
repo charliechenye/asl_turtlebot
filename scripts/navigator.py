@@ -90,7 +90,7 @@ class Navigator:
         # threshold at which navigator switches from trajectory to pose control
         self.near_thresh = 0.2
         self.at_thresh = 0.02
-        self.at_thresh_theta = 0.05
+        self.at_thresh_theta = 0.1
 
         # trajectory smoothing
         self.spline_alpha = 0.15
@@ -164,7 +164,6 @@ class Navigator:
     def switch_to_rescue_callback(self, msg):
         if msg.data:
             self.traj_dt = 0.5
-            self.n_obj_pub.publish(len(self.object_detected_location))
             id = 0
             console_string = ''
             for name in self.object_detected_location:
@@ -176,7 +175,9 @@ class Navigator:
                     console_string += '\t%d: %s\n' % (id, name)
                     rospy.loginfo("Sent info for %d: %s" % (id, name))
                     id += 1
+            self.n_obj_pub.publish(id)
             self.obj_name_pub.publish(console_string)
+            rospy.loginfo(console_string)
         else:
             self.traj_dt = 0.02
             self.spline_alpha = 0.01
