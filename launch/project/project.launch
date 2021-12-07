@@ -6,7 +6,7 @@
   <rosparam param="use_tf" subst_value="true">$(arg use_tf)</rosparam>
 
   <include file="$(find asl_turtlebot)/launch/root.launch">
-    <arg name="world" value="project_city2" />
+    <arg name="world" value="project_city5" />
     <arg name="x_pos" default="3.15"/>
     <arg name="y_pos" default="1.6"/>
     <arg name="z_pos" default="0.0"/>

@@ -128,7 +128,9 @@ class Navigator:
 
         self.cfg_srv = Server(NavigatorConfig, self.dyn_cfg_callback)
         
-        self.obj_pub = rospy.Publisher('marker_topic', Marker, queue_size=10)
+        self.obj_pub = rospy.Publisher('/detected/object_location', Marker, queue_size=10)
+        
+        self.pose_pub = rospy.Publisher('/detected/robot_location',Pose2D, queue_size=10)
 
         rospy.Subscriber("/map_dilated", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)
@@ -143,13 +145,10 @@ class Navigator:
         self.stop_time = rospy.get_param("~stop_time", 3.)
 
         # Minimum distance from a stop sign to obey it
-        self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.2)
-
+        self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.4)
+       
         # Time taken to cross an intersection
         self.crossing_time = rospy.get_param("~crossing_time", 3.)
-        # except
-        # print("no /detector/stop_sign topic")
-        ###
 
         self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
         print("finished init")
@@ -582,15 +581,15 @@ class Navigator:
                 # At a stop sign
                 # check if we can proceed
                 if self.has_stopped():
-                    # self.mode = Mode.CROSS
-                    self.mode = Mode.TRACK
-                    # self.init_crossing()
+                    self.mode = Mode.CROSS
+                    #self.mode = Mode.TRACK
+                    self.init_crossing()
 
-            # elif self.mode == Mode.CROSS:
-            # Crossing an intersection
-            # check if crossing time has expired
-            # if self.has_crossed():
-            # self.mode = Mode.TRACK
+            elif self.mode == Mode.CROSS:
+                # Crossing an intersection
+                # check if crossing time has expired
+                if self.has_crossed():
+                    self.mode = Mode.TRACK
             # self.nav_to_pose()
             ###
 
