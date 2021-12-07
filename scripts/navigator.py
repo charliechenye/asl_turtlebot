@@ -3,7 +3,7 @@
 import rospy
 from nav_msgs.msg import OccupancyGrid, MapMetaData, Path
 from geometry_msgs.msg import Twist, Pose2D, PoseStamped
-from std_msgs.msg import String, Bool, Int32
+from std_msgs.msg import String, Bool
 import tf
 import numpy as np
 from numpy import linalg
@@ -131,7 +131,6 @@ class Navigator:
         self.obj_pub = rospy.Publisher('/detected/object_location', Marker, queue_size=10)
 
         self.pose_pub = rospy.Publisher('/detected/robot_location', DetectedObjectLocation, queue_size=10)
-        self.n_obj_pub = rospy.Publisher('/detected/n_objects', Int32, queue_size=10)
 
         self.object_detected = False
         self.object_detected_location = {}
@@ -163,7 +162,6 @@ class Navigator:
     def switch_to_rescue_callback(self, msg):
         if msg.data:
             self.traj_dt = 0.5
-            self.n_obj_pub.publish(len(self.object_detected_location))
             for name in self.object_detected_location:
                 obj, loc = self.object_detected_location[name]
                 entry = DetectedObjectLocation()
