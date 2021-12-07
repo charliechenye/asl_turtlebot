@@ -204,7 +204,7 @@ class Navigator:
         thetaright = wrapToPi(msg.thetaright)
 
         theta_mid = (thetaleft + thetaright) / 2
-        theta_obj = self.poseTheta - theta_mid
+        theta_obj = self.poseTheta + theta_mid
 
         x_obj = self.poseX + dist * np.cos(theta_obj)
         y_obj = self.poseY + dist * np.sin(theta_obj)
