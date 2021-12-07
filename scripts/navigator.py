@@ -14,7 +14,7 @@ import scipy.interpolate
 import matplotlib.pyplot as plt
 from controllers import PoseController, TrajectoryTracker, HeadingController
 from enum import Enum
-from asl_turtlebot.msg import DetectedObject, DetectedObjectLocation
+from asl_turtlebot.msg import DetectedObject
 
 from dynamic_reconfigure.server import Server
 from asl_turtlebot.cfg import NavigatorConfig
@@ -127,13 +127,12 @@ class Navigator:
         self.trans_listener = tf.TransformListener()
 
         self.cfg_srv = Server(NavigatorConfig, self.dyn_cfg_callback)
-
+        
         self.obj_pub = rospy.Publisher('/detected/object_location', Marker, queue_size=10)
-
-        self.pose_pub = rospy.Publisher('/detected/robot_location', DetectedObjectLocation, queue_size=10)
-
+        
+        self.pose_pub = rospy.Publisher('/detected/robot_location',Pose2D, queue_size=10)
+        
         self.object_detected = False
-        self.object_detected_location = {}
 
         rospy.Subscriber("/map_dilated", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)
@@ -149,7 +148,7 @@ class Navigator:
 
         # Minimum distance from a stop sign to obey it
         self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.6)
-
+       
         # Time taken to cross an intersection
         self.crossing_time = rospy.get_param("~crossing_time", 3.)
 
@@ -162,13 +161,6 @@ class Navigator:
     def switch_to_rescue_callback(self, msg):
         if msg.data:
             self.traj_dt = 0.5
-            for name in self.object_detected_location:
-                obj, loc = self.object_detected_location[name]
-                entry = DetectedObjectLocation()
-                entry.name = name
-                entry.obj = obj
-                entry.loc = loc
-                self.pose_pub.publish(entry)
         else:
             self.traj_dt = 0.02
             self.spline_alpha = 0.01
@@ -195,12 +187,20 @@ class Navigator:
                       msg.pose.pose.orientation.w)
         euler = tf.transformations.euler_from_quaternion(quaternion)
         self.poseTheta = euler[2]
+        if self.object_detected == True:
+            pose = Pose2D()
+            pose.x = self.poseX
+            pose.y = self.poseY
+            pose.theta = self.poseTheta
+            self.pose_pub.publish(pose)
+            self.object_detected = False
+            
 
     def detected_object_callback(self, msg):
-        if msg.name not in ['airplane', 'person', 'bed', 'microwave', 'tv']:
+        if msg.name not in ['airplane','person','bed','microwave','tv']:
             self.object_detected = True
             rospy.loginfo(
-                "detected object callack values: id:%d" % msg.id
+            "detected object callack values: id:%d" % msg.id
             )
             marker = Marker()
 
@@ -240,14 +240,6 @@ class Navigator:
             marker.color.b = 0.0
             self.obj_pub.publish(marker)
             rospy.loginfo("Objected Marker Published")
-
-            pose = Pose2D()
-            pose.x = self.poseX
-            pose.y = self.poseY
-            pose.theta = self.poseTheta
-
-            # record location where we detected the object
-            self.object_detected_location[msg.name] = (msg, pose)
 
     def dyn_cfg_callback(self, config, level):
         rospy.loginfo(
@@ -452,7 +444,7 @@ class Navigator:
     def get_current_plan_time(self):
         t = (rospy.get_rostime() - self.current_plan_start_time).to_sec()
         return max(0.0, t)  # clip negative time to 0
-
+    
     def replan(self):
         """
         loads goal into pose controller
