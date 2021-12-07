@@ -2,19 +2,19 @@
 
 import rospy
 from geometry_msgs.msg import Pose2D
-from std_msgs.msg import Bool, Int32
+from std_msgs.msg import Bool, Int32, String
 from visualization_msgs.msg import Marker
 from time import sleep
 from math import pi
-from asl_turtlebot.msg import DetectedObjectLocation
 
 
 class PublishWayPoint:
     def __init__(self):
         rospy.init_node("turtlebot_waypoint", anonymous=False)
         rospy.Subscriber('/retrieve_next_waypoint', Bool, self.retrieve_next_way_point)
-        rospy.Subscriber('/detected/robot_location', DetectedObjectLocation, self.record_location)
+        rospy.Subscriber('/detected/robot_location', Pose2D, self.record_location)
         rospy.Subscriber('/detected/n_objects', Int32, self.record_n_objects)
+        rospy.Subscriber('/detected/console_input_descriptor', String, self.set_console_string)
 
         # self.obj_sub = rospy.Subscriber('/object_locations', Pose2D, self.record_object)
 
@@ -33,10 +33,11 @@ class PublishWayPoint:
         self.way_point_list = []
         self.way_point_list_reversed = []
         self.way_point_viz = []
-        self.location_point_list = {}
+        self.location_point_list = []
 
         self.n_objects = 0
         self.received_objects = 0
+        self.console_input = None
         # Preset Way Points
         s = """
 x: 3.321861347827481
@@ -169,41 +170,31 @@ theta: 1.6007259330564694
                     self.explore_phase = False
                     self.delayed_publish = self.delayed_publish_res
                     self.published_i = 0
-
-        """
-        if not self.explore_phase and self.rescue_waypoint_j < self.total_waypoints - 1:
-            # try rescue navigation
-            if self.en_route_rescue:
-                rospy.loginfo("Received Instruction to publish waypoint %d" % self.published_i)
-                sleep(self.delayed_publish)
-                rospy.loginfo("Publishing waypoint %d" % self.published_i)
-                self.way_point_viz[self.published_i].header.stamp = rospy.Time()
-                self.way_point_viz_pub.publish(self.way_point_viz[self.published_i])
-                self.way_point_lst_pub.publish(self.way_point_list[self.published_i])
-                self.published_i += 1
-                self.en_route_rescue = False
-            else:
-                rospy.loginfo("Received Instruction to home waypoint")
-                sleep(self.delayed_publish)
-                rospy.loginfo("Publishing home address")
-                self.way_point_viz[self.published_i].header.stamp = rospy.Time()
-                self.way_point_viz_pub.publish(self.way_point_viz[-1])
-                self.way_point_lst_pub.publish(self.way_point_list[-1])
-                self.en_route_rescue = True
-        """
+        else:
+            choose_id = -1
+            while choose_id >= self.n_objects or choose_id < 0:
+                rospy.loginfo("Choose object to navigate to")
+                rospy.loginfo(self.console_input)
+                choose_id = input("Choose object to navigate to: ")
+            rospy.loginfo("Received Instruction to publish object %d" % choose_id)
+            sleep(self.delayed_publish)
+            rospy.loginfo("Publishing object %d" % choose_id)
+            self.way_point_lst_pub.publish(self.location_point_list[choose_id])
 
     def record_location(self, msg):
         self.received_objects += 1
-        if msg.name == 'stop_sign':
-            rospy.loginfo("Ignoring Stop Sign")
-        else:
-            rospy.loginfo("Received location for %s" % msg.name)
-            self.location_point_list[msg.name] = msg.loc
-        if 0 < self.n_objects == self.received_objects:
+        rospy.loginfo("Received location for %d" % self.received_objects)
+        self.location_point_list.append(msg.loc)
+        if 0 < self.n_objects == self.received_objects and self.console_input is not None:
             self.retrieve_next_way_point(Bool(True))
 
     def record_n_objects(self, msg):
         self.n_objects = msg.data
+        if self.n_objects == self.received_objects and self.console_input is not None:
+            self.retrieve_next_way_point(Bool(True))
+
+    def set_console_string(self, msg):
+        self.console_input = msg.data
         if self.n_objects == self.received_objects:
             self.retrieve_next_way_point(Bool(True))
 

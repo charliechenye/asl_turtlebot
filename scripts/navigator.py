@@ -3,7 +3,7 @@
 import rospy
 from nav_msgs.msg import OccupancyGrid, MapMetaData, Path
 from geometry_msgs.msg import Twist, Pose2D, PoseStamped
-from std_msgs.msg import String, Bool, Int32
+from std_msgs.msg import String, Bool, Int32, String
 import tf
 import numpy as np
 from numpy import linalg
@@ -14,7 +14,7 @@ import scipy.interpolate
 import matplotlib.pyplot as plt
 from controllers import PoseController, TrajectoryTracker, HeadingController
 from enum import Enum
-from asl_turtlebot.msg import DetectedObject, DetectedObjectLocation
+from asl_turtlebot.msg import DetectedObject
 
 from dynamic_reconfigure.server import Server
 from asl_turtlebot.cfg import NavigatorConfig
@@ -131,10 +131,10 @@ class Navigator:
         self.fov_pub = rospy.Publisher('/fov_marker', Marker, queue_size=10)
 
         self.obj_pub = rospy.Publisher('/detected/object_location', Marker, queue_size=10)
-        self.pose_pub = rospy.Publisher('/detected/robot_location', DetectedObjectLocation, queue_size=10)
+        self.obj_name_pub = rospy.Publisher('/detected/console_input_descriptor', String, queue_size=10)
+        self.pose_pub = rospy.Publisher('/detected/robot_location', Pose2D, queue_size=10)
         self.n_obj_pub = rospy.Publisher('/detected/n_objects', Int32, queue_size=10)
 
-        self.object_detected = False
         self.object_detected_location = {}
 
         rospy.Subscriber("/map_dilated", OccupancyGrid, self.map_callback)
@@ -161,18 +161,22 @@ class Navigator:
         self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
         print("finished init")
 
-
     def switch_to_rescue_callback(self, msg):
         if msg.data:
             self.traj_dt = 0.5
             self.n_obj_pub.publish(len(self.object_detected_location))
+            id = 0
+            console_string = ''
             for name in self.object_detected_location:
-                obj, loc = self.object_detected_location[name]
-                entry = DetectedObjectLocation()
-                entry.name = name
-                entry.obj = obj
-                entry.loc = loc
-                self.pose_pub.publish(entry)
+                if name == 'stop_sign':
+                    rospy.loginfo("Ignoring Stop Sign")
+                else:
+                    _, loc = self.object_detected_location[name]
+                    self.pose_pub.publish(loc)
+                    console_string += '\t%d: %s\n' % (id, name)
+                    rospy.loginfo("Sent info for %d: %s" % (id, name))
+                    id += 1
+            self.obj_name_pub.publish(console_string)
         else:
             self.traj_dt = 0.02
             self.spline_alpha = 0.01
@@ -199,14 +203,6 @@ class Navigator:
                       msg.pose.pose.orientation.w)
         euler = tf.transformations.euler_from_quaternion(quaternion)
         self.poseTheta = euler[2]
-        
-        if self.object_detected == True:
-            pose = Pose2D()
-            pose.x = self.poseX
-            pose.y = self.poseY
-            pose.theta = self.poseTheta
-            self.pose_pub.publish(pose)
-            self.object_detected = False
 
         # Frame visualization
         camera_pov_marker = Marker()
@@ -252,11 +248,9 @@ class Navigator:
         # print(camera_pov_marker.camera_points)
 
         self.fov_pub.publish(camera_pov_marker)
-            
 
     def detected_object_callback(self, msg):
         if msg.name not in ['airplane', 'person', 'bed', 'microwave', 'tv']:
-            self.object_detected = True
             rospy.loginfo(
                 "detected object callack values: id:%d" % msg.id
             )
