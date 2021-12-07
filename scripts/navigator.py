@@ -533,8 +533,11 @@ class Navigator:
             self.switch_mode(Mode.ALIGN)
             return
 
-        rospy.loginfo("Ready to track")
-        self.switch_mode(Mode.TRACK)
+        if self.mode != Mode.STOP:
+            rospy.loginfo("Ready to track")
+            self.switch_mode(Mode.TRACK)
+        else:
+            rospy.loginfo("Stopped for Stop Sign")
 
     def run(self):
         rate = rospy.Rate(10)  # 10 Hz
