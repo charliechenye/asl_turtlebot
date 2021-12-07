@@ -156,7 +156,8 @@ class Navigator:
         if msg.data:
             self.traj_dt = 0.5
         else:
-            self.traj_dt = 0.1
+            self.traj_dt = 0.02
+            self.spline_alpha = 0.01
 
     ###
     def stop_sign_detected_callback(self, msg):
