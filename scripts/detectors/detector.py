@@ -28,9 +28,6 @@ from asl_turtlebot.msg import DetectedObject
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import math
-from visualization_msgs.msg import Marker
-from geometry_msgs.msg import Pose2D
-from nav_msgs.msg import Odometry
 
 
 def load_object_labels(filename):
@@ -205,7 +202,7 @@ class Detector:
 
         num_m, dist = 0, 0
         for m in meas:
-            if m > 0 and m < float('Inf'):
+            if 0 < m < float('Inf'):
                 dist += m
                 num_m += 1
         if num_m > 0:
@@ -281,28 +278,28 @@ class Detector:
                 object_msg.thetaleft = thetaleft
                 object_msg.thetaright = thetaright
                 object_msg.corners = [ymin, xmin, ymax, xmax]
-		
-		
-		# dector publishes theta, distance, id to navigator
-		# navigator computes location and publishes /detected/object_location (Marker)
-		# navigator records down currrent position (x, y, theta) from odom when it received the object # /detected/robot_location (Pose2D)
-		# explore_map remembers it.
-		# threshold high .7
-		# maybe in navigator filter out on id
-		
+
+                # detector publishes theta, distance, id to navigator
+                # navigator computes location and publishes /detected/object_location (Marker)
+                # navigator records down current position (x, y, theta) from odom when it received the object
+                # /detected/robot_location (Pose2D)
+                # explore_map remembers it.
+                # threshold high .7
+                # maybe in navigator filter out on id
+
                 if self.object_labels[cl] == 'stop_sign':
                     self.object_publishers[0].publish(object_msg)
+
+                if self.object_labels[cl] not in self.published_objects:
+                    self.object_publishers[1].publish(object_msg)
+                    self.published_objects.append(self.object_labels[cl])
+                    self.published_objects_conf.append(sc)
                 else:
-                    if self.object_labels[cl] not in self.published_objects:
+                    label = self.object_labels[cl]
+                    ind = self.published_objects.index(label)
+                    if sc > self.published_objects_conf[ind]:
                         self.object_publishers[1].publish(object_msg)
-                        self.published_objects.append(self.object_labels[cl])
-                        self.published_objects_conf.append(sc)
-                    else:
-                        label = self.object_labels[cl]
-                        ind = self.published_objects.index(label)
-                        if sc > self.published_objects_conf[ind]:
-                            self.object_publishers[1].publish(object_msg)
-                            self.published_objects_conf[ind] = sc
+                        self.published_objects_conf[ind] = sc
 
                 # self.object_publishers[cl].publish(object_msg)
 
@@ -337,4 +334,3 @@ class Detector:
 if __name__ == '__main__':
     d = Detector()
     d.run()
-
