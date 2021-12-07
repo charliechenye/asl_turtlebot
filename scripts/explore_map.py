@@ -184,7 +184,7 @@ theta: 1.6007259330564694
     def record_location(self, msg):
         self.received_objects += 1
         rospy.loginfo("Received location for %d" % self.received_objects)
-        self.location_point_list.append(msg.loc)
+        self.location_point_list.append(msg)
         if 0 < self.n_objects == self.received_objects and self.console_input is not None:
             self.retrieve_next_way_point(Bool(True))
 
