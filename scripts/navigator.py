@@ -150,6 +150,9 @@ class Navigator:
         # Time taken to cross an intersection
         self.crossing_time = rospy.get_param("~crossing_time", 15.)
 
+        self.cross_start = None
+        self.stop_sign_start = None
+
         self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
         print("finished init")
 
@@ -170,7 +173,7 @@ class Navigator:
         print("stop sign detected ", dist, " from robot")
 
         # if close enough and in nav or pose mode, stop
-        if dist > 0 and dist < self.stop_min_dist and (self.mode == Mode.TRACK):  # or self.mode == Mode.ALIGN):
+        if self.mode == Mode.TRACK and 0 < dist < self.stop_min_dist:  # or self.mode == Mode.ALIGN):
             self.init_stop_sign()
 
     ###
@@ -362,9 +365,9 @@ class Navigator:
 
     def init_crossing(self):
         """ initiates an intersection crossing maneuver """
-
+        rospy.loginfo("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH: initialize crossing")
         self.cross_start = rospy.get_rostime()
-        # self.mode = Mode.CROSS
+        self.switch_mode(Mode.CROSS)
 
     def has_crossed(self):
         """ checks if crossing maneuver is over """
@@ -588,9 +591,7 @@ class Navigator:
                 # At a stop sign
                 # check if we can proceed
                 if self.has_stopped():
-                    self.switch_mode(Mode.CROSS)
-                    # self.mode = Mode.TRACK
-                    # self.object_labels
+                    rospy.loginfo("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH: finished stopping")
                     self.init_crossing()
 
             elif self.mode == Mode.CROSS:
@@ -598,7 +599,6 @@ class Navigator:
                 # check if crossing time has expired
                 if self.has_crossed():
                     self.switch_mode(Mode.TRACK)
-                #self.nav_to_pose()
             ###
 
             self.publish_control()
