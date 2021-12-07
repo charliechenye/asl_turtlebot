@@ -246,6 +246,14 @@ Visualization Manager:
       Unreliable: false
       Use Timestamp: false
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /detected/object_location
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -283,7 +291,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 138.16757202148438
+      Scale: 118.11095428466797
       Target Frame: <Fixed Frame>
       X: 1.3751431703567505
       Y: 1.686357855796814
@@ -306,5 +314,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1306
-  X: -4
-  Y: -64
+  X: 52
+  Y: -9
