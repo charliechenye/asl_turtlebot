@@ -6,10 +6,11 @@ from std_msgs.msg import Bool, Int32, String
 from visualization_msgs.msg import Marker
 from time import sleep
 from math import pi
+from sys import argv
 
 
 class PublishWayPoint:
-    def __init__(self):
+    def __init__(self, explore_phase=True, start_from=0, reverse_order=False):
         rospy.init_node("turtlebot_waypoint", anonymous=False)
         rospy.Subscriber('/retrieve_next_waypoint', Bool, self.retrieve_next_way_point)
         rospy.Subscriber('/detected/robot_location', Pose2D, self.record_location)
@@ -26,8 +27,8 @@ class PublishWayPoint:
         self.delayed_publish_res = rospy.get_param("~delay_publish_rescue", 1)
         self.marker_size = rospy.get_param("~marker_size", 0.1)
 
-        self.explore_phase = True
-        self.reverse_order = False
+        self.explore_phase = explore_phase
+        self.reverse_order = reverse_order
         self.delayed_publish = self.delayed_publish_exp
 
         self.way_point_list = []
@@ -106,12 +107,15 @@ theta: 1.6007259330564694
         self.total_locations = 0
 
         if self.reverse_order:
-            self.published_i = self.total_waypoints - 1
+            self.published_i = self.total_waypoints - 1 - start_from
         else:
-            self.published_i = 0
+            self.published_i = start_from
 
-        self.retrieve_next_way_point(Bool(True))
-        self.switch_to_rescue_pub.publish(Bool(False))
+        if explore_phase:
+            self.switch_to_rescue_pub.publish(Bool(False))
+            self.retrieve_next_way_point(Bool(True))
+        else:
+            self.switch_to_rescue_pub.publish(Bool(True))
 
     def retrieve_next_way_point(self, msg):
         if not msg.data:
@@ -210,5 +214,16 @@ theta: 1.6007259330564694
 
 
 if __name__ == '__main__':
-    wp = PublishWayPoint()
+    explore_phase = True
+    start_from = 0
+    reverse_order = False
+    if len(argv) > 1:
+        if argv[1][0] == 'F':
+            explore_phase = False
+    if len(argv) > 2:
+        start_from = int(argv[2])
+    if len(argv) > 3:
+        if argv[3][0] == 'F':
+            reverse_order = False
+    wp = PublishWayPoint(explore_phase=explore_phase, start_from=start_from, reverse_order=reverse_order)
     wp.run()
