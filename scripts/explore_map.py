@@ -190,6 +190,7 @@ theta: 1.6007259330564694
 
     def record_n_objects(self, msg):
         self.n_objects = msg.data
+        rospy.loginfo("Should receive %d items in total" % self.n_objects)
         if self.n_objects == self.received_objects and self.console_input is not None:
             self.retrieve_next_way_point(Bool(True))
 

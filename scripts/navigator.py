@@ -175,6 +175,7 @@ class Navigator:
                     console_string += '\t%d: %s\n' % (id, name)
                     rospy.loginfo("Sent info for %d: %s" % (id, name))
                     id += 1
+            rospy.loginfo("Sent %d items in total" % id)
             self.n_obj_pub.publish(id)
             self.obj_name_pub.publish(console_string)
             rospy.loginfo(console_string)
