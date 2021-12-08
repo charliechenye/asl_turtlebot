@@ -221,9 +221,9 @@ class Navigator:
         # camera_pov_marker.lifetime = rospy.Duration(10)
         camera_pov_marker.action = 0
         camera_points = []
-        camera_xvar = 0.6
-        camera_yvar = 0.2
-        camera_height = 0.6
+        camera_xvar = 0.9
+        camera_yvar = 0.8
+        camera_height = 1.0
         corners = [Point(camera_xvar, camera_yvar, camera_height), Point(camera_xvar, -camera_yvar, camera_height),
                    Point(camera_xvar, camera_yvar, 0), Point(camera_xvar, -camera_yvar, 0)]
         camera_base = Point(0, 0, 0)
