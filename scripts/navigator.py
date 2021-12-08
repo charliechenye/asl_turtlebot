@@ -603,7 +603,7 @@ class Navigator:
             t_init_align = abs(th_err / self.om_max)
             t_remaining_new = t_init_align + t_new[-1]
 
-            if t_remaining_new > t_remaining_curr * 1.05:
+            if t_remaining_new > t_remaining_curr * 1.02:
                 rospy.loginfo(
                     "New plan rejected (longer duration than current plan)"
                 )
