@@ -171,7 +171,8 @@ class Navigator:
 
     def switch_to_rescue_callback(self, msg):
         if msg.data:
-            self.traj_dt = 0.5
+            self.traj_dt = 0.02
+            self.spline_alpha = 0.01
             self.explore_mode = False
             id = 0
             console_string = ''
@@ -199,8 +200,8 @@ class Navigator:
             rospy.loginfo(console_string)
         else:
             self.explore_mode = True
-            self.traj_dt = 0.02
-            self.spline_alpha = 0.01
+            self.spline_alpha = 0.15
+            self.traj_dt = 0.1
 
     ###
     def stop_sign_detected_callback(self, msg):
