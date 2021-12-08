@@ -149,7 +149,7 @@ class Navigator:
         # try:
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         # Time to stop at a stop sign
-        self.stop_time = rospy.get_param("~stop_sign_time", 2.)
+        self.stop_time = rospy.get_param("~stop_sign_time", 5.)
 
         # Minimum distance from a stop sign to obey it
         self.stop_min_dist = rospy.get_param("~stop_min_dist", .8)
@@ -175,7 +175,7 @@ class Navigator:
             self.traj_dt = 0.02
             self.spline_alpha = 0.01
             self.explore_mode = False
-            self.time_threshold = 1.05
+            self.time_threshold = 1.04
             id = 0
             console_string = ''
             for name in self.object_detected_location:
