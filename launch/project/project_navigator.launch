@@ -3,9 +3,9 @@
   <arg name="om_max" default="0.4"/>
   <arg name="robot_size" default="6"/>
   <arg name="kbd_flg" default='false'/>
-  <arg name="stop_sign_time" default="3"/>
-  <arg name="stop_min_dist" default="0.6"/>
-  <arg name="crossing_time" default="3"/>
+  <arg name="stop_sign_time" default="2"/>
+  <arg name="stop_min_dist" default="0.8"/>
+  <arg name="crossing_time" default="5"/>
 
   <node pkg="asl_turtlebot" type="navigator.py" name="navigator" output="screen">
     <param name="v_max" value="$(arg v_max)"/>
