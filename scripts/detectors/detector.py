@@ -292,7 +292,7 @@ class Detector:
                 if self.object_labels[cl] == 'stop_sign':
                     self.object_publishers[0].publish(object_msg)
 
-                if dist < self.distance_threshold:
+                if dist < self.params.distance_threshold:
                     if self.object_labels[cl] not in self.published_objects:
                         self.object_publishers[1].publish(object_msg)
                         self.published_objects.append(self.object_labels[cl])
