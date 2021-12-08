@@ -136,6 +136,7 @@ class Navigator:
         self.n_obj_pub = rospy.Publisher('/detected/n_objects', Int32, queue_size=10)
 
         self.object_detected_location = {}
+        self.publish_object_mode = True
 
         rospy.Subscriber("/map_dilated", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)
@@ -164,6 +165,7 @@ class Navigator:
     def switch_to_rescue_callback(self, msg):
         if msg.data:
             self.traj_dt = 0.5
+            self.publish_object_mode = False
             id = 0
             console_string = ''
             for name in self.object_detected_location:
@@ -180,6 +182,7 @@ class Navigator:
             self.obj_name_pub.publish(console_string)
             rospy.loginfo(console_string)
         else:
+            self.publish_object_mode = True
             self.traj_dt = 0.02
             self.spline_alpha = 0.01
 
@@ -252,7 +255,7 @@ class Navigator:
         self.fov_pub.publish(camera_pov_marker)
 
     def detected_object_callback(self, msg):
-        if msg.name not in ['airplane', 'person', 'bed', 'microwave', 'tv']:
+        if self.publish_object_mode and msg.name not in ['airplane', 'person', 'bed', 'microwave', 'tv']:
             rospy.loginfo(
                 "detected object callack values: id:%d" % msg.id
             )
