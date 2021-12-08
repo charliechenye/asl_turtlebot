@@ -158,51 +158,6 @@ class Navigator:
         self.cross_start = None
         self.stop_sign_start = None
 
-        # Camera Point of View visualization
-        camera_pov_marker = Marker()
-        camera_pov_marker.header.frame_id = "base_footprint"
-        camera_pov_marker.header.stamp = rospy.Time()
-
-        # IMPORTANT: If you're creating multiple markers, # each need to have a separate camera_pov_marker ID.
-        # using 200 to stay clear of 0-180 which are possible from detector
-        camera_pov_marker.id = 200
-        camera_pov_marker.type = 5
-        camera_pov_marker.color.g = 1.0
-        camera_pov_marker.scale.x = 0.01
-        camera_pov_marker.color.a = 1.0
-        # camera_pov_marker.lifetime = rospy.Duration(10)
-        camera_pov_marker.action = 0
-        camera_points = []
-        camera_xvar = 0.9
-        camera_yvar = 0.8
-        camera_height = 1.0
-        corners = [Point(camera_xvar, camera_yvar, camera_height), Point(camera_xvar, -camera_yvar, camera_height),
-                   Point(camera_xvar, camera_yvar, 0), Point(camera_xvar, -camera_yvar, 0)]
-        camera_base = Point(0, 0, 0)
-
-        camera_points.append(camera_base)
-        camera_points.append(corners[0])
-        camera_points.append(camera_base)
-        camera_points.append(corners[1])
-        camera_points.append(camera_base)
-        camera_points.append(corners[2])
-        camera_points.append(camera_base)
-        camera_points.append(corners[3])
-
-        camera_points.append(corners[0])
-        camera_points.append(corners[1])
-        camera_points.append(corners[0])
-        camera_points.append(corners[2])
-        camera_points.append(corners[2])
-        camera_points.append(corners[3])
-        camera_points.append(corners[1])
-        camera_points.append(corners[3])
-
-        camera_pov_marker.points = camera_points
-        # print(camera_pov_marker.camera_points)
-
-        self.fov_pub.publish(camera_pov_marker)
-
         self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
         print("finished init")
 
@@ -251,6 +206,50 @@ class Navigator:
         euler = tf.transformations.euler_from_quaternion(quaternion)
         self.poseTheta = euler[2]
 
+        # Frame visualization
+        camera_pov_marker = Marker()
+        camera_pov_marker.header.frame_id = "base_footprint"
+        camera_pov_marker.header.stamp = rospy.Time()
+
+        # IMPORTANT: If you're creating multiple markers, # each need to have a separate camera_pov_marker ID.
+        # using 200 to stay clear of 0-180 which are possible from detector
+        camera_pov_marker.id = 200
+        camera_pov_marker.type = 5
+        camera_pov_marker.color.g = 1.0
+        camera_pov_marker.scale.x = 0.01
+        camera_pov_marker.color.a = 1.0
+        # camera_pov_marker.lifetime = rospy.Duration(10)
+        camera_pov_marker.action = 0
+        camera_points = []
+        camera_xvar = 0.9
+        camera_yvar = 0.8
+        camera_height = 1.0
+        corners = [Point(camera_xvar, camera_yvar, camera_height), Point(camera_xvar, -camera_yvar, camera_height),
+                   Point(camera_xvar, camera_yvar, 0), Point(camera_xvar, -camera_yvar, 0)]
+        camera_base = Point(0, 0, 0)
+
+        camera_points.append(camera_base)
+        camera_points.append(corners[0])
+        camera_points.append(camera_base)
+        camera_points.append(corners[1])
+        camera_points.append(camera_base)
+        camera_points.append(corners[2])
+        camera_points.append(camera_base)
+        camera_points.append(corners[3])
+
+        camera_points.append(corners[0])
+        camera_points.append(corners[1])
+        camera_points.append(corners[0])
+        camera_points.append(corners[2])
+        camera_points.append(corners[2])
+        camera_points.append(corners[3])
+        camera_points.append(corners[1])
+        camera_points.append(corners[3])
+
+        camera_pov_marker.points = camera_points
+        # print(camera_pov_marker.camera_points)
+
+        self.fov_pub.publish(camera_pov_marker)
 
     def detected_object_callback(self, msg):
         if msg.name not in ['airplane', 'person', 'bed', 'microwave', 'tv']:
