@@ -304,8 +304,8 @@ class Navigator:
             )
 
             pose = Pose2D()
-            pose.x = self.poseX # - map_odom_translation[0]
-            pose.y = self.poseY #- map_odom_translation[1]
+            pose.x = self.poseX + map_odom_translation[0]
+            pose.y = self.poseY + map_odom_translation[1]
             pose.theta = self.poseTheta
 
             # record location where we detected the object
