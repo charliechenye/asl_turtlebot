@@ -148,13 +148,13 @@ class Navigator:
         # try:
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         # Time to stop at a stop sign
-        self.stop_time = rospy.get_param("~stop_sign_time", 3.)
+        self.stop_time = rospy.get_param("~stop_sign_time", 2.)
 
         # Minimum distance from a stop sign to obey it
         self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.6)
 
         # Time taken to cross an intersection
-        self.crossing_time = rospy.get_param("~crossing_time", 3.)
+        self.crossing_time = rospy.get_param("~crossing_time", 5.)
 
         self.cross_start = None
         self.stop_sign_start = None
