@@ -293,7 +293,7 @@ class Detector:
                     self.object_publishers[0].publish(object_msg)
 
                 else:
-                    rospy.loginfo(self.object_labels[cl], dist)
+                    rospy.loginfo("Detected %s at distance %d" % (self.object_labels[cl], dist))
                 if dist < self.params.distance_threshold:
                     if self.object_labels[cl] not in self.published_objects:
                         self.object_publishers[1].publish(object_msg)
