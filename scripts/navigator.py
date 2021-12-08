@@ -167,6 +167,7 @@ class Navigator:
                                       (0, 2), (1, 1), (2, 0), (1, -1), (0, -2), (-1, -1), (-2, 0), (-1, 1),
                                       (0, 3), (1, 2), (2, 1), (3, 0), (2, -1), (1, -2), (0, -3),
                                       (-1, -2), (-2, -1), (-3, 0), (-2, 1), (-1, 2), ]
+        self.time_threshold = 1.02
         print("finished init")
 
     def switch_to_rescue_callback(self, msg):
@@ -174,6 +175,7 @@ class Navigator:
             self.traj_dt = 0.02
             self.spline_alpha = 0.01
             self.explore_mode = False
+            self.time_threshold = 1.05
             id = 0
             console_string = ''
             for name in self.object_detected_location:
@@ -202,6 +204,7 @@ class Navigator:
             self.explore_mode = True
             self.spline_alpha = 0.15
             self.traj_dt = 0.1
+            self.time_threshold = 1.02
 
     ###
     def stop_sign_detected_callback(self, msg):
@@ -603,7 +606,7 @@ class Navigator:
             t_init_align = abs(th_err / self.om_max)
             t_remaining_new = t_init_align + t_new[-1]
 
-            if t_remaining_new > t_remaining_curr * 1.02:
+            if t_remaining_new > t_remaining_curr * self.time_threshold:
                 rospy.loginfo(
                     "New plan rejected (longer duration than current plan)"
                 )
