@@ -61,7 +61,7 @@ class DetectorParams:
         # Minimum score for positive detection
         self.min_score = rospy.get_param("~min_score", 0.67)
         # Minimum distance to "detect" an object
-        self.distance_threshold = rospy.get_param("~min_dist", 1)
+        self.distance_threshold = rospy.get_param("~min_dist", 2)
 
         if verbose:
             print("DetectorParams:")
@@ -69,7 +69,7 @@ class DetectorParams:
             print("    model_path = {}".format(model_path))
             print("    label_path = {}".format(label_path))
             print("    min_score = {}".format(self.min_score))
-
+            print("    min_dist = {}".format(self.distance_threshold))
 
 class Detector:
 
