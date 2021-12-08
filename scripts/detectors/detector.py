@@ -294,17 +294,17 @@ class Detector:
 
                 else:
                     rospy.loginfo("Detected %s at distance %.3f with confidence %.3f" % (self.object_labels[cl], dist, sc))
-                if dist < self.params.distance_threshold:
-                    if self.object_labels[cl] not in self.published_objects:
-                        self.object_publishers[1].publish(object_msg)
-                        self.published_objects.append(self.object_labels[cl])
-                        self.published_objects_conf.append(sc)
-                    else:
-                        label = self.object_labels[cl]
-                        ind = self.published_objects.index(label)
-                        if sc > self.published_objects_conf[ind]:
+                    if dist < self.params.distance_threshold:
+                        if self.object_labels[cl] not in self.published_objects:
                             self.object_publishers[1].publish(object_msg)
-                            self.published_objects_conf[ind] = sc
+                            self.published_objects.append(self.object_labels[cl])
+                            self.published_objects_conf.append(sc)
+                        else:
+                            label = self.object_labels[cl]
+                            ind = self.published_objects.index(label)
+                            if sc > self.published_objects_conf[ind]:
+                                self.object_publishers[1].publish(object_msg)
+                                self.published_objects_conf[ind] = sc
 
                 # self.object_publishers[cl].publish(object_msg)
 
