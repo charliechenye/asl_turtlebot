@@ -124,7 +124,7 @@ theta: 1.6007259330564694
                 self.way_point_viz.append(marker)
 
             counter = (counter + 1) % 4
-        self.total_waypoints = 4# len(self.way_point_list)
+        self.total_waypoints = len(self.way_point_list)
         self.total_locations = 0
 
         if self.reverse_order:
