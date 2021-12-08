@@ -160,6 +160,12 @@ class Navigator:
         self.stop_sign_start = None
 
         self.next_way_point_pub = rospy.Publisher('/retrieve_next_waypoint', Bool, queue_size=10)
+
+        self.explore_neighbor_list = [(0, 0),
+                                      (0, 1), (1, 0), (0, -1), (-1, 0),
+                                      (0, 2), (1, 1), (2, 0), (1, -1), (0, -2), (-1, -1), (-2, 0), (-1, 1),
+                                      (0, 3), (1, 2), (2, 1), (3, 0), (2, -1), (1, -2), (0, -3),
+                                      (-1, -2), (-2, -1), (-3, 0), (-2, 1), (-1, 2), ]
         print("finished init")
 
     def switch_to_rescue_callback(self, msg):
@@ -173,6 +179,15 @@ class Navigator:
                     rospy.loginfo("Ignoring Stop Sign")
                 else:
                     _, loc = self.object_detected_location[name]
+                    for dx, dy in self.explore_neighbor_list:
+                        x, y = loc.x + dx * self.occupancy.resolution, loc.y + dy * self.occupancy.resolution
+                        if self.occupancy.is_free((x, y)):
+                            loc.x = x
+                            loc.y = y
+                            rospy.loginfo("%d: %s moved %.3f, %.3f" % (id, name,
+                                                                       dx * self.occupancy.resolution,
+                                                                       dy * self.occupancy.resolution))
+                            break
                     self.pose_pub.publish(loc)
                     console_string += '\t%d: %s\n' % (id, name)
                     rospy.loginfo("Sent info for %d: %s" % (id, name))
