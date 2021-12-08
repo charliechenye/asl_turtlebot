@@ -61,7 +61,7 @@ class DetectorParams:
         # Minimum score for positive detection
         self.min_score = rospy.get_param("~min_score", 0.67)
         # Minimum distance to "detect" an object
-        self.distance_threshold = rospy.get_param("~min_dist", 2)
+        self.distance_threshold = rospy.get_param("~min_dist", .5)
 
         if verbose:
             print("DetectorParams:")
@@ -293,7 +293,7 @@ class Detector:
                     self.object_publishers[0].publish(object_msg)
 
                 else:
-                    rospy.loginfo("Detected %s at distance %d" % (self.object_labels[cl], dist))
+                    rospy.loginfo("Detected %s at distance %.3f with confidence %.3f" % (self.object_labels[cl], dist, sc))
                 if dist < self.params.distance_threshold:
                     if self.object_labels[cl] not in self.published_objects:
                         self.object_publishers[1].publish(object_msg)
