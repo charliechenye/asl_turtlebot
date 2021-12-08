@@ -136,7 +136,7 @@ class Navigator:
         self.n_obj_pub = rospy.Publisher('/detected/n_objects', Int32, queue_size=10)
 
         self.object_detected_location = {}
-        self.publish_object_mode = True
+        self.explore_mode = True
 
         rospy.Subscriber("/map_dilated", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map_metadata", MapMetaData, self.map_md_callback)
@@ -165,7 +165,7 @@ class Navigator:
     def switch_to_rescue_callback(self, msg):
         if msg.data:
             self.traj_dt = 0.5
-            self.publish_object_mode = False
+            self.explore_mode = False
             id = 0
             console_string = ''
             for name in self.object_detected_location:
@@ -182,7 +182,7 @@ class Navigator:
             self.obj_name_pub.publish(console_string)
             rospy.loginfo(console_string)
         else:
-            self.publish_object_mode = True
+            self.explore_mode = True
             self.traj_dt = 0.02
             self.spline_alpha = 0.01
 
@@ -191,12 +191,13 @@ class Navigator:
         """ callback for when the detector has found a stop sign. Note that
         a distance of 0 can mean that the lidar did not pickup the stop sign at all """
 
+        # Stop sign only enforced during explore
         # distance of the stop sign
         dist = msg.distance
-        print("stop sign detected ", dist, " from robot")
+        rospy.loginfo("Stop sign detected %.3f from robot" % dist)
 
         # if close enough and in nav or pose mode, stop
-        if self.mode == Mode.TRACK and 0 < dist < self.stop_min_dist:  # or self.mode == Mode.ALIGN):
+        if self.explore_mode and self.mode == Mode.TRACK and 0 < dist < self.stop_min_dist:  # or self.mode == Mode.ALIGN):
             self.init_stop_sign()
 
     ###
@@ -255,7 +256,7 @@ class Navigator:
         self.fov_pub.publish(camera_pov_marker)
 
     def detected_object_callback(self, msg):
-        if self.publish_object_mode and msg.name not in ['airplane', 'person', 'bed', 'microwave', 'tv']:
+        if self.explore_mode and msg.name not in ['airplane', 'person', 'bed', 'microwave', 'tv']:
             rospy.loginfo(
                 "detected object callack values: id:%d" % msg.id
             )
