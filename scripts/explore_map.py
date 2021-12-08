@@ -99,8 +99,7 @@ theta: 1.6007259330564694
             else:
                 self.way_point_list.append(Pose2D(x, y, th))
                 self.way_point_list_reversed.append(Pose2D(x, y, (th + pi) % (2 * pi)))
-                object_marker = self.make_marker('/map', x, y)
-                self.way_point_viz.append(object_marker)
+                self.way_point_viz.append(self.make_marker('/map', x, y))
 
             counter = (counter + 1) % 4
         self.total_waypoints = len(self.way_point_list)
@@ -159,10 +158,9 @@ theta: 1.6007259330564694
             sleep(self.delayed_publish)
             rospy.loginfo("Publishing object %d" % choose_id)
             self.way_point_lst_pub.publish(self.location_point_list[choose_id])
-            marker = self.make_marker('/map',
-                                      self.location_point_list[choose_id].x,
-                                      self.location_point_list[choose_id].y)
-            self.way_point_viz_pub.publish(marker)
+            self.way_point_viz_pub.publish(self.make_marker('/map',
+                                                            self.location_point_list[choose_id].x,
+                                                            self.location_point_list[choose_id].y))
 
     def record_location(self, msg):
         rospy.loginfo("Received location for %d" % self.received_objects)
@@ -185,7 +183,7 @@ theta: 1.6007259330564694
     def run(self):
         rospy.spin()
 
-    def make_marker(self, frame_id, x, y, marker_id=0):
+    def make_marker(self, frame_id, x, y, marker_id = 190):
         marker = Marker()
         marker.header.frame_id = frame_id
         marker.id = marker_id
