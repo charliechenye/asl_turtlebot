@@ -50,7 +50,7 @@ class DetectorParams:
     def __init__(self, verbose=True):
         # Set to True to use tensorflow and a conv net.
         # False will use a very simple color thresholding to detect stop signs only.
-        self.use_tf = rospy.get_param("use_tf")
+        self.use_tf = rospy.get_param("use_tf", True)
 
         # Path to the trained conv net
         model_path = rospy.get_param("~model_path", "../../tfmodels/ssd_mobilenet_v1_coco.pb")
@@ -60,6 +60,8 @@ class DetectorParams:
 
         # Minimum score for positive detection
         self.min_score = rospy.get_param("~min_score", 0.67)
+        # Minimum distance to "detect" an object
+        self.distance_threshold = rospy.get_param("~min_dist", 0.5)
 
         if verbose:
             print("DetectorParams:")
@@ -290,16 +292,17 @@ class Detector:
                 if self.object_labels[cl] == 'stop_sign':
                     self.object_publishers[0].publish(object_msg)
 
-                if self.object_labels[cl] not in self.published_objects:
-                    self.object_publishers[1].publish(object_msg)
-                    self.published_objects.append(self.object_labels[cl])
-                    self.published_objects_conf.append(sc)
-                else:
-                    label = self.object_labels[cl]
-                    ind = self.published_objects.index(label)
-                    if sc > self.published_objects_conf[ind]:
+                if dist < self.distance_threshold:
+                    if self.object_labels[cl] not in self.published_objects:
                         self.object_publishers[1].publish(object_msg)
-                        self.published_objects_conf[ind] = sc
+                        self.published_objects.append(self.object_labels[cl])
+                        self.published_objects_conf.append(sc)
+                    else:
+                        label = self.object_labels[cl]
+                        ind = self.published_objects.index(label)
+                        if sc > self.published_objects_conf[ind]:
+                            self.object_publishers[1].publish(object_msg)
+                            self.published_objects_conf[ind] = sc
 
                 # self.object_publishers[cl].publish(object_msg)
 
