@@ -99,29 +99,7 @@ theta: 1.6007259330564694
             else:
                 self.way_point_list.append(Pose2D(x, y, th))
                 self.way_point_list_reversed.append(Pose2D(x, y, (th + pi) % (2 * pi)))
-                marker = Marker()
-                marker.header.frame_id = "map"
-                marker.id = 0
-                marker.type = 2  # sphere
-
-                marker.pose.position.x = x
-                marker.pose.position.y = y
-                marker.pose.position.z = 0
-
-                marker.pose.orientation.x = 0.0
-                marker.pose.orientation.y = 0.0
-                marker.pose.orientation.z = 0.0
-                marker.pose.orientation.w = 1.0
-
-                marker.scale.x = self.marker_size
-                marker.scale.y = self.marker_size
-                marker.scale.z = self.marker_size
-
-                marker.color.a = 0.5  # Don't forget to set the alpha!
-                marker.color.r = 0.0
-                marker.color.g = 1.0
-                marker.color.b = 0.0
-                self.way_point_viz.append(marker)
+                self.way_point_viz.append(self.make_marker('/map', x, y))
 
             counter = (counter + 1) % 4
         self.total_waypoints = len(self.way_point_list)
@@ -180,6 +158,9 @@ theta: 1.6007259330564694
             sleep(self.delayed_publish)
             rospy.loginfo("Publishing object %d" % choose_id)
             self.way_point_lst_pub.publish(self.location_point_list[choose_id])
+            self.way_point_viz_pub.publish(self.make_marker('/map',
+                                                            self.location_point_list[choose_id].x,
+                                                            self.location_point_list[choose_id].y))
 
     def record_location(self, msg):
         rospy.loginfo("Received location for %d" % self.received_objects)
@@ -201,6 +182,32 @@ theta: 1.6007259330564694
 
     def run(self):
         rospy.spin()
+
+    def make_marker(self, frame_id, x, y, marker_id = 190):
+        marker = Marker()
+        marker.header.frame_id = frame_id
+        marker.id = marker_id
+        marker.type = 2  # sphere
+
+        marker.pose.position.x = x
+        marker.pose.position.y = y
+        marker.pose.position.z = 0
+
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+
+        marker.scale.x = self.marker_size
+        marker.scale.y = self.marker_size
+        marker.scale.z = self.marker_size
+
+        marker.color.a = 0.5  # Don't forget to set the alpha!
+        marker.color.r = 0.0
+        marker.color.g = 1.0
+        marker.color.b = 0.0
+
+        return marker
 
 
 if __name__ == '__main__':
