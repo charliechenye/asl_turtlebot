@@ -144,6 +144,7 @@ class Navigator:
         rospy.Subscriber('/cmd_switch_rescue', Bool, self.switch_to_rescue_callback)
         rospy.Subscriber('/odom', Odometry, self.location_callback)
         rospy.Subscriber('/detector/objects', DetectedObject, self.detected_object_callback)
+        rospy.Subscriber('/control_force_stop', Bool, self.force_stop)
         ###
         # try:
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
@@ -441,6 +442,11 @@ class Navigator:
         self.mode = new_mode
 
     ###
+    def force_stop(self, msg):
+        if msg.data:
+            rospy.loginfo("Forced stop！！！！")
+            self.switch_mode(Mode.IDLE)
+
     def init_stop_sign(self):
         """ initiates a stop sign maneuver """
         # transition to STOP mode
