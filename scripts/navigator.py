@@ -77,8 +77,8 @@ class Navigator:
         self.plan_start = [0.0, 0.0]
 
         # Robot limits
-        self.v_max = rospy.get_param("~v_max", 0.5)  # maximum velocity
-        self.om_max = rospy.get_param("~om_max", 0.2)  # maximum angular velocity
+        self.v_max = rospy.get_param("~v_max", 0.2)  # maximum velocity
+        self.om_max = rospy.get_param("~om_max", 0.4)  # maximum angular velocity
         self.robot_size = rospy.get_param("~robot_size", 6)
 
         self.v_des = 0.12  # desired cruising velocity
@@ -97,13 +97,13 @@ class Navigator:
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
-        self.kpx = 1.0
-        self.kpy = 1.0
-        self.kdx = 1.5
-        self.kdy = 1.5
+        self.kpx = 1.5
+        self.kpy = 1.5
+        self.kdx = 0.5
+        self.kdy = 0.5
 
         # heading controller parameters
-        self.kp_th = 0.5
+        self.kp_th = 0.7
 
         self.traj_controller = TrajectoryTracker(
             self.kpx, self.kpy, self.kdx, self.kdy, self.v_max, self.om_max
