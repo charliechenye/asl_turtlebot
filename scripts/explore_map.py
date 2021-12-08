@@ -173,7 +173,7 @@ theta: 1.6007259330564694
         else:
             choose_id = -1
             while choose_id >= self.n_objects or choose_id < 0:
-                rospy.loginfo("Choose object to navigate to")
+                rospy.loginfo("Choose among follow objects")
                 rospy.loginfo(self.console_input)
                 choose_id = int(input("Choose object to navigate to: "))
             rospy.loginfo("Received Instruction to publish object %d" % choose_id)
